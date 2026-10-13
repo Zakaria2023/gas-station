@@ -1,55 +1,51 @@
 import "server-only";
-import { and, asc, eq, gte, lte, max, min, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { CylinderType, cylinderTypes } from "@/db/enum";
 import { Movements, StockCounts } from "@/db/schema";
-import { buildLedger, LedgerDay } from "@/lib/ledger";
+import { buildLedger, LedgerDay, stockBefore } from "@/lib/ledger";
 import { movementSums } from "./aggregates";
 
 export type Ledger = Record<CylinderType, LedgerDay[]>;
 
 /**
- * Where a type's running totals start for a range beginning on `from`: the
- * latest count on or before it, else the first movement ever, else `from`.
- * Both are asked in one round trip: the database is far from the server.
+ * One type's days from `from` to `to`. The stock just before `from` comes from
+ * the last count before it plus the movements since, added up in the
+ * database; then only the window itself is walked. All four questions go in
+ * parallel — the database is far from the server — so a month ten years in
+ * costs the same as this one.
  */
-const startFor = async (cylinderType: CylinderType, from: string): Promise<string> => {
-  const latestCount = db
-    .select({ date: max(StockCounts.countedOn) })
-    .from(StockCounts)
-    .where(and(eq(StockCounts.cylinderType, cylinderType), lte(StockCounts.countedOn, from)));
-  const firstMovement = db
-    .select({ date: min(Movements.businessDate) })
-    .from(Movements)
-    .where(eq(Movements.cylinderType, cylinderType));
-  // ::text keeps the dates as "YYYY-MM-DD" whatever the driver does with a date.
-  const result = await db.execute<{ counted_on: string | null; first_movement: string | null }>(
-    sql`select (${latestCount})::text as counted_on, (${firstMovement})::text as first_movement`,
-  );
-  const row = result.rows[0];
-  if (row?.counted_on) {
-    return row.counted_on;
-  }
-  return row?.first_movement && row.first_movement < from ? row.first_movement : from;
-};
-
 const ledgerFor = async (
   cylinderType: CylinderType,
   from: string,
   to: string,
 ): Promise<LedgerDay[]> => {
-  const start = await startFor(cylinderType, from);
-  const [counts, totals] = await Promise.all([
+  const ofType = eq(StockCounts.cylinderType, cylinderType);
+  const lastCountDate = sql`(select max(${StockCounts.countedOn}) from ${StockCounts} where ${ofType} and ${StockCounts.countedOn} < ${from})`;
+
+  const [[lastCount], before, counts, totals] = await Promise.all([
+    db
+      .select({ full: StockCounts.full, empty: StockCounts.empty })
+      .from(StockCounts)
+      .where(and(ofType, lt(StockCounts.countedOn, from)))
+      .orderBy(desc(StockCounts.countedOn))
+      .limit(1),
+    db
+      .select({ kind: Movements.kind, quantity: movementSums.quantity })
+      .from(Movements)
+      .where(
+        and(
+          eq(Movements.cylinderType, cylinderType),
+          lt(Movements.businessDate, from),
+          // Only what came after the last count; with no count, everything.
+          sql`${Movements.businessDate} >= coalesce(${lastCountDate}, '0001-01-01'::date)`,
+        ),
+      )
+      .groupBy(Movements.kind),
     db
       .select({ countedOn: StockCounts.countedOn, full: StockCounts.full, empty: StockCounts.empty })
       .from(StockCounts)
-      .where(
-        and(
-          eq(StockCounts.cylinderType, cylinderType),
-          gte(StockCounts.countedOn, start),
-          lte(StockCounts.countedOn, to),
-        ),
-      )
+      .where(and(ofType, gte(StockCounts.countedOn, from), lte(StockCounts.countedOn, to)))
       .orderBy(asc(StockCounts.countedOn)),
     db
       .select({
@@ -63,13 +59,14 @@ const ledgerFor = async (
       .where(
         and(
           eq(Movements.cylinderType, cylinderType),
-          gte(Movements.businessDate, start),
+          gte(Movements.businessDate, from),
           lte(Movements.businessDate, to),
         ),
       )
       .groupBy(Movements.businessDate, Movements.kind),
   ]);
-  return buildLedger(start, to, counts, totals).filter((day) => day.date >= from);
+
+  return buildLedger(from, to, counts, totals, stockBefore(lastCount ?? null, before));
 };
 
 /** Day by day, for both types, from `from` to `to` inclusive. */
@@ -91,4 +88,12 @@ export const getDayStock = async (date: string): Promise<Record<CylinderType, Le
     return day;
   };
   return { household: pick("household"), industrial: pick("industrial") };
+};
+
+/** The first day anything was recorded, so history knows how far back to go. */
+export const getFirstActivityDate = async (): Promise<string | null> => {
+  const result = await db.execute<{ first: string | null }>(
+    sql`select least((select min(${Movements.businessDate}) from ${Movements}), (select min(${StockCounts.countedOn}) from ${StockCounts}))::text as first`,
+  );
+  return result.rows[0]?.first ?? null;
 };

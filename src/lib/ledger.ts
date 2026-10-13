@@ -1,4 +1,4 @@
-import { MovementKind, movementKinds } from "@/db/enum";
+import { CylinderType, cylinderTypes, MovementKind, movementKinds } from "@/db/enum";
 import { addDays } from "@/utils/dates";
 import { applyToStock, StockDelta } from "./movement-rules";
 import { roundMoney } from "./pricing";
@@ -51,15 +51,17 @@ export const emptyTotals = (): KindTotals =>
 export const stockTotal = (stock: StockDelta): number => stock.full + stock.empty;
 
 /**
- * Every day from `start` to `end` (inclusive, "YYYY-MM-DD"). `start` must be on
- * or before the first count and movement that matter — usually the latest
- * count before the range — and the stock before `start` is taken as zero.
+ * Every day from `start` to `end` (inclusive, "YYYY-MM-DD"), given the counts
+ * and movements inside that window and the stock just before it (`initial`,
+ * zero when nothing came before). Only the window is walked, so a month ten
+ * years in is as quick as this one.
  */
 export const buildLedger = (
   start: string,
   end: string,
   counts: CountRow[],
   movements: MovementTotalRow[],
+  initial: StockDelta = { full: 0, empty: 0 },
 ): LedgerDay[] => {
   const countByDay = new Map(counts.map((count) => [count.countedOn, count]));
   const movementsByDay = new Map<string, MovementTotalRow[]>();
@@ -70,7 +72,7 @@ export const buildLedger = (
   }
 
   const days: LedgerDay[] = [];
-  let stock: StockDelta = { full: 0, empty: 0 };
+  let stock: StockDelta = initial;
 
   for (let date = start; date <= end; date = addDays(date, 1)) {
     const expectedOpening = stock;
@@ -102,3 +104,49 @@ export const buildLedger = (
   }
   return days;
 };
+
+/**
+ * The stock at the start of a day from what came before it: the last count
+ * before the day plus every movement since — the same walk as the ledger,
+ * folded into totals per kind so it needs no day-by-day loop.
+ */
+export const stockBefore = (
+  lastCount: { full: number; empty: number } | null,
+  movementsSince: { kind: MovementKind; quantity: number }[],
+): StockDelta =>
+  movementsSince.reduce(
+    (stock, row) => applyToStock(stock, row.kind, row.quantity),
+    lastCount ? { full: lastCount.full, empty: lastCount.empty } : { full: 0, empty: 0 },
+  );
+
+/** Both types' money for the same day, kind by kind. */
+export const sumAmounts = (days: LedgerDay[]): KindTotals => {
+  const amounts = emptyTotals();
+  for (const day of days) {
+    for (const kind of movementKinds) {
+      amounts[kind] = roundMoney(amounts[kind] + day.amounts[kind]);
+    }
+  }
+  return amounts;
+};
+
+/** One kind of one type over a period: how many cylinders, how much money, how many entries. */
+export type KindSummaryRow = {
+  kind: MovementKind;
+  cylinderType: CylinderType;
+  quantity: number;
+  amount: number;
+  count: number;
+};
+
+/** A run of ledger days, per type, added up into summary rows — the same shape the log's totals use. */
+export const summaryRowsOf = (days: Record<CylinderType, LedgerDay[]>): KindSummaryRow[] =>
+  cylinderTypes.flatMap((cylinderType) =>
+    movementKinds.map((kind) => ({
+      kind,
+      cylinderType,
+      quantity: days[cylinderType].reduce((sum, day) => sum + day.totals[kind], 0),
+      amount: roundMoney(days[cylinderType].reduce((sum, day) => sum + day.amounts[kind], 0)),
+      count: 0,
+    })),
+  );

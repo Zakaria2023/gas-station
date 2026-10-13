@@ -57,6 +57,27 @@ export const formatShortDay = (iso: string): string => SHORT_DAY.format(toUtc(is
 export const formatWeekday = (iso: string): string => WEEKDAY.format(toUtc(iso));
 export const formatFullDay = (iso: string): string => FULL_DAY.format(toUtc(iso));
 
+/** A calendar month as "YYYY-MM". */
+export const isIsoMonth = (value: string | null | undefined): value is string =>
+  typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+
+export const monthOf = (iso: string): string => iso.slice(0, 7);
+
+export const monthStart = (month: string): string => `${month}-01`;
+
+export const addMonths = (month: string, months: number): string => {
+  const date = new Date(`${month}-01T00:00:00Z`);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return date.toISOString().slice(0, 7);
+};
+
+export const monthEnd = (month: string): string => addDays(monthStart(addMonths(month, 1)), -1);
+
+const MONTH = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "numeric", timeZone: "UTC" });
+
+/** "تشرين الأول 2026". */
+export const formatMonth = (month: string): string => MONTH.format(toUtc(monthStart(month)));
+
 /** "اليوم", "مبارح", or the weekday — how people name a recent day. */
 export const relativeDayName = (iso: string, today: string): string => {
   if (iso === today) {

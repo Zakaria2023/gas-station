@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { movementKinds } from "@/db/enum";
-import { addDays, isIsoDate, todayIso } from "@/utils/dates";
-import { foldArabic } from "@/utils/text";
+import { addDays, addMonths, isIsoDate, monthEnd, todayIso } from "@/utils/dates";
+import { foldArabic, formatCount, formatMoney, formatSigned } from "@/utils/text";
 import { balanceEntries, foldBalance } from "./balances";
-import { buildLedger, emptyTotals, stockTotal } from "./ledger";
+import { buildLedger, emptyTotals, stockBefore, stockTotal } from "./ledger";
 import { applyToStock, MOVEMENT_EFFECTS, needsCustomer } from "./movement-rules";
 import { amountOf, dayAccount, PriceList, priceFor, stockValue } from "./pricing";
 
@@ -95,6 +95,20 @@ describe("ledger", () => {
     expect(day?.movementCount).toBe(3);
   });
 
+  it("starts a window from the stock before it, as if every earlier day had been walked", () => {
+    // Counted 41 / 434 long ago, then 20 exchanges and 1 refill since.
+    const before = stockBefore({ full: 41, empty: 434 }, [
+      { kind: "exchange", quantity: 20 },
+      { kind: "refill", quantity: 1 },
+    ]);
+    expect(before).toEqual({ full: 22, empty: 453 });
+    const [day] = buildLedger("2036-10-13", "2036-10-13", [], [], before);
+    expect(day?.opening).toEqual(before);
+    expect(day?.expectedOpening).toEqual(before);
+    // With no count ever, everything starts from zero.
+    expect(stockBefore(null, [{ kind: "customer_empty_in", quantity: 3 }])).toEqual({ full: 0, empty: 3 });
+  });
+
   it("walks across a month end", () => {
     const days = buildLedger("2026-10-30", "2026-11-02", [], []);
     expect(days.map((day) => day.date)).toEqual([
@@ -169,9 +183,20 @@ describe("money", () => {
 });
 
 describe("dates and names", () => {
+  // The invisible marks that keep a sign in front of a number in right-to-left text.
+  const LRI = String.fromCharCode(0x2066);
+  const PDI = String.fromCharCode(0x2069);
+
   it("adds days on the calendar, not in a time zone", () => {
     expect(addDays("2026-03-28", 1)).toBe("2026-03-29");
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+  });
+
+  it("steps through months, ends included", () => {
+    expect(addMonths("2026-01", -1)).toBe("2025-12");
+    expect(addMonths("2026-12", 1)).toBe("2027-01");
+    expect(monthEnd("2028-02")).toBe("2028-02-29");
+    expect(monthEnd("2026-10")).toBe("2026-10-31");
   });
 
   it("knows a real date from a typo", () => {
@@ -183,6 +208,14 @@ describe("dates and names", () => {
   it("names today in the shop's time zone", () => {
     // 22:30 UTC on the 12th is already the 13th in Damascus (UTC+3).
     expect(todayIso(new Date(Date.UTC(2026, 9, 12, 22, 30)))).toBe("2026-10-13");
+  });
+
+  it("keeps the minus in front of a negative number in a right-to-left line", () => {
+    expect(formatCount(-15)).toBe(`${LRI}−15${PDI}`);
+    expect(formatMoney(-1500)).toBe(`${LRI}−1,500${PDI} ل.س`);
+    expect(formatCount(15)).toBe("15");
+    expect(formatSigned(3)).toBe(`${LRI}+3${PDI}`);
+    expect(formatSigned(-3)).toBe(`${LRI}−3${PDI}`);
   });
 
   it("folds the letters people type interchangeably", () => {
