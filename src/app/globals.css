@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* Cairo comes from next/font (see app/layout.tsx), self-hosted from files in
+   the repo: one file holds the Arabic letters, one the Latin letters and
+   digits, and the browser picks per character. */
+@theme inline {
+  --font-sans: var(--font-cairo-arabic), var(--font-cairo-latin), ui-sans-serif, system-ui,
+    sans-serif;
+}
+
+@theme {
+  /* Deep blue for the one emphatic colour. */
+  --color-primary: #17468f;
+  --color-primary-hover: #123a78;
+  --color-primary-tint: #ebf1fa;
+  --color-primary-soft: #d6e2f5;
+
+  --color-ink: #0f1b2d;
+  --color-muted: #5a6a7f;
+  --color-faint: #97a4b5;
+
+  --color-page: #f1f4f8;
+  --color-surface: #ffffff;
+  --color-hairline: #e2e7ee;
+  --color-hairline-soft: #eef1f5;
+  --color-hover: #f5f7fa;
+  --color-scrim: rgb(15 27 45 / 0.45);
+
+  /* One colour per cylinder type: the type is the first split on every screen. */
+  --color-household: #2563c9;
+  --color-household-tint: #eaf1fc;
+  --color-industrial: #d0570f;
+  --color-industrial-tint: #fdf0e6;
+
+  /* One colour per group of movements, each with a tint for its chip. */
+  --color-sales: #2563c9;
+  --color-sales-tint: #eaf1fc;
+  --color-debts: #b45309;
+  --color-debts-tint: #fdf3e3;
+  --color-returns: #12805c;
+  --color-returns-tint: #e5f5ee;
+  --color-stock: #6d3fc8;
+  --color-stock-tint: #f1ebfc;
+
+  --color-danger: #c62828;
+  --color-danger-tint: #fdeaea;
+  --color-success: #12805c;
+  --color-success-tint: #e5f5ee;
+  --color-warning: #b45309;
+  --color-warning-tint: #fdf3e3;
+
+  --radius-card: 20px;
+  --radius-control: 14px;
+
+  --shadow-card: 0 1px 2px rgb(15 27 45 / 0.04), 0 2px 8px rgb(15 27 45 / 0.04);
+  --shadow-float: 0 8px 24px rgb(23 70 143 / 0.28);
+  --shadow-sheet: 0 -8px 32px rgb(15 27 45 / 0.16);
+
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-sheet-up: sheet-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-flash: flash 2.4s ease-out;
+  --animate-toast: toast 3.2s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    background-color: var(--color-success-tint);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  8%,
+  85% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+    visibility: hidden;
+  }
+}
+
+html {
+  /* No grey flash on tap; the app gives its own pressed states. */
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* 16px or more keeps iOS from zooming into a field when it is tapped. */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Number fields without the desktop spinner arrows. */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* Numbers line up when they share a width per digit. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Room for the phone's home bar under fixed bottom bars. */
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
