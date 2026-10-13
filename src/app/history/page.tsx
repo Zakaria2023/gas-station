@@ -1,125 +1,97 @@
-import { CalendarDays, ChevronLeft, ClipboardCheck } from "lucide-react";
+import { CalendarDays, List } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { CylinderIcon } from "@/components/ui/cylinder-icon";
+import { DayRow, DayRows } from "@/components/history/day-rows";
+import { MonthNav } from "@/components/history/month-nav";
+import { LogTabs } from "@/components/layout/log-tabs";
+import { MoneySummary } from "@/components/money/money-summary";
+import { StockSummary } from "@/components/stock/stock-summary";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { TYPE_DOT } from "@/components/ui/type-badge";
 import { cylinderTypes } from "@/db/enum";
-import { CYLINDER_TYPE_LABELS } from "@/db/label";
-import { dayAccount } from "@/lib/pricing";
-import { getLedger } from "@/services";
-import { addDays, formatCount, formatFullDay, formatMoney, relativeDayName, todayIso } from "@/utils";
+import { summaryRowsOf } from "@/lib/ledger";
+import { getFirstActivityDate, getLedger } from "@/services";
+import { addMonths, formatMonth, isIsoMonth, monthEnd, monthOf, monthStart, todayIso } from "@/utils";
 
-export const metadata: Metadata = { title: "السجل" };
+export const metadata: Metadata = { title: "سجل الأيام" };
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const RANGES = [30, 90, 365];
-
+/**
+ * Every day ever, a month at a time: back as far as the first entry, ten years
+ * or more. Laid out like the movements log — the month bar, its totals, the
+ * stock at its end, then its days.
+ */
 const HistoryPage = async ({ searchParams }: Props) => {
   const params = await searchParams;
-  const asked = Number(Array.isArray(params.days) ? params.days[0] : params.days);
-  const days = RANGES.includes(asked) ? asked : RANGES[0]!;
   const today = todayIso();
-  const ledger = await getLedger(addDays(today, -(days - 1)), today);
+  const thisMonth = monthOf(today);
+  const asked = Array.isArray(params.month) ? params.month[0] : params.month;
+  const month = isIsoMonth(asked) && asked <= thisMonth ? asked : thisMonth;
+  const end = month === thisMonth ? today : monthEnd(month);
+
+  const [ledger, firstDate] = await Promise.all([getLedger(monthStart(month), end), getFirstActivityDate()]);
+  const firstMonth = firstDate ? monthOf(firstDate) : thisMonth;
 
   // The two types walk the same dates; a day shows when anything happened in it.
-  const rows = ledger.household
-    .map((household, index) => ({ date: household.date, household, industrial: ledger.industrial[index]! }))
-    .filter(
-      (row) =>
-        row.date === today ||
-        cylinderTypes.some((type) => row[type].movementCount > 0 || row[type].counted),
-    )
+  const days: DayRow[] = ledger.household.map((household, index) => ({
+    date: household.date,
+    household,
+    industrial: ledger.industrial[index]!,
+  }));
+  const rows = days
+    .filter((row) => row.date === today || cylinderTypes.some((type) => row[type].movementCount > 0 || row[type].counted))
     .reverse();
+  const lastDay = days[days.length - 1];
 
   return (
     <>
-      <PageHeader title="السجل" subtitle="آخر اليوم لكل يوم فيه حركة" />
-      <div className="flex flex-col gap-3 px-4">
-        <div className="flex gap-2">
-          {RANGES.map((range) => (
-            <Link
-              key={range}
-              href={range === RANGES[0] ? "/history" : `/history?days=${range}`}
-              className={`min-h-10 flex-1 rounded-full px-3 py-2 text-center text-sm font-bold ${
-                range === days ? "bg-ink text-white" : "bg-surface text-muted shadow-card"
-              }`}
-            >
-              {range === 365 ? "سنة" : `${range} يوم`}
-            </Link>
-          ))}
+      <PageHeader title="السجل" subtitle={`${formatMonth(month)} · كل الأيام، شهر بشهر`} />
+
+      <div className="px-4 pb-3 lg:pb-5">
+        <LogTabs active="days" />
+      </div>
+
+      <div className="flex flex-col gap-3 px-4 lg:gap-5">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className="lg:w-96">
+            <MonthNav
+              month={month}
+              label={formatMonth(month)}
+              previous={month > firstMonth ? addMonths(month, -1) : null}
+              next={month < thisMonth ? addMonths(month, 1) : null}
+              thisMonth={thisMonth}
+              firstMonth={firstMonth}
+            />
+          </div>
+          <Link
+            href={`/movements?from=${monthStart(month)}&to=${end}`}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-control px-3 text-sm font-bold text-primary hover:bg-primary-tint active:bg-primary-tint"
+          >
+            <List size={18} />
+            كل حركات {formatMonth(month)}
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5">
+          <MoneySummary rows={summaryRowsOf(ledger)} periodLabel={formatMonth(month)} />
+          {lastDay && (
+            <StockSummary
+              title={month === thisMonth ? "المخزون الآن" : "المخزون آخر الشهر"}
+              meta={formatMonth(month)}
+              stock={{ household: lastDay.household.closing, industrial: lastDay.industrial.closing }}
+            />
+          )}
         </div>
 
         {rows.length === 0 ? (
           <section className="rounded-card bg-surface shadow-card">
-            <EmptyState icon={<CalendarDays size={26} />} title="ما في أيام مسجّلة بعد" />
+            <EmptyState icon={<CalendarDays size={26} />} title="ما في أيام مسجّلة بهذا الشهر" />
           </section>
         ) : (
-          <ul className="flex flex-col gap-2.5">
-            {rows.map((row) => {
-              const count = row.household.movementCount + row.industrial.movementCount;
-              const counted = row.household.counted || row.industrial.counted;
-              const income = cylinderTypes.reduce(
-                (sum, type) => sum + dayAccount(row[type].amounts).income,
-                0,
-              );
-              return (
-                <li key={row.date}>
-                  <Link
-                    href={row.date === today ? "/" : `/?date=${row.date}`}
-                    className="block rounded-card bg-surface p-4 shadow-card active:bg-hover"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-base font-extrabold text-ink">{relativeDayName(row.date, today)}</p>
-                        <p className="text-sm text-muted">{formatFullDay(row.date)}</p>
-                        {income !== 0 && (
-                          <p className="mt-1 text-sm font-bold text-success tabular">مقبوض {formatMoney(income)}</p>
-                        )}
-                      </div>
-                      {counted && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-hairline-soft px-2 py-0.5 text-[11px] font-bold text-muted">
-                          <ClipboardCheck size={12} />
-                          جرد
-                        </span>
-                      )}
-                      <span className="text-sm font-semibold text-muted">
-                        <span className="tabular">{formatCount(count)}</span> حركة
-                      </span>
-                      <ChevronLeft size={18} className="text-faint" />
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {cylinderTypes.map((type) => {
-                        const closing = row[type].closing;
-                        return (
-                          <div key={type} className="rounded-control bg-hover px-3 py-2">
-                            <p className="flex items-center gap-1.5 text-xs font-bold text-muted">
-                              <span className={`h-2 w-2 rounded-full ${TYPE_DOT[type]}`} />
-                              {CYLINDER_TYPE_LABELS[type]}
-                            </p>
-                            <p className="mt-1 flex items-center gap-3 text-base font-extrabold text-ink tabular">
-                              <span className={`flex items-center gap-1 ${closing.full < 0 ? "text-danger" : ""}`}>
-                                <CylinderIcon filled size={15} className="text-muted" />
-                                {formatCount(closing.full)}
-                              </span>
-                              <span className={`flex items-center gap-1 ${closing.empty < 0 ? "text-danger" : ""}`}>
-                                <CylinderIcon filled={false} size={15} className="text-muted" />
-                                {formatCount(closing.empty)}
-                              </span>
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <DayRows rows={rows} today={today} />
         )}
       </div>
     </>
