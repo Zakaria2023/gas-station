@@ -38,15 +38,15 @@ export const BottomSheet = ({ open, onClose, title, children }: BottomSheetProps
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6" role="dialog" aria-modal="true" aria-label={title}>
       <button
         type="button"
         aria-label="إغلاق"
         onClick={onClose}
         className="absolute inset-0 animate-fade-in bg-scrim"
       />
-      <div className="pb-safe relative flex max-h-[88dvh] w-full max-w-xl animate-sheet-up flex-col rounded-t-[24px] bg-surface shadow-sheet">
-        <div className="flex justify-center pt-2.5">
+      <div className="pb-safe relative flex max-h-[88dvh] w-full max-w-xl animate-sheet-up flex-col rounded-t-[24px] bg-surface shadow-sheet lg:max-h-[80dvh] lg:animate-fade-in lg:rounded-[24px] lg:pb-2">
+        <div className="flex justify-center pt-2.5 lg:hidden">
           <span className="h-1.5 w-10 rounded-full bg-hairline" />
         </div>
         <div className="flex items-center justify-between gap-3 px-4 pt-2 pb-3">

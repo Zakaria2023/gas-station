@@ -9,8 +9,8 @@ export const CustomerSearch = () => {
   const { search, setSearch, owingOnly, setOwingOnly } = useCustomerSearch();
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="relative">
+    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+      <div className="relative lg:flex-1">
         <Search size={19} className="pointer-events-none absolute start-3.5 top-3.5 text-faint" />
         <Input
           value={search}
@@ -31,15 +31,17 @@ export const CustomerSearch = () => {
           </button>
         )}
       </div>
-      <Segmented
-        label="عرض"
-        value={owingOnly ? "owing" : "all"}
-        onChange={(next) => setOwingOnly(next === "owing")}
-        options={[
-          { value: "all", label: "كل الزبائن" },
-          { value: "owing", label: "اللي عليهم دين" },
-        ]}
-      />
+      <div className="lg:w-96">
+        <Segmented
+          label="عرض"
+          value={owingOnly ? "owing" : "all"}
+          onChange={(next) => setOwingOnly(next === "owing")}
+          options={[
+            { value: "all", label: "كل الزبائن" },
+            { value: "owing", label: "اللي عليهم دين" },
+          ]}
+        />
+      </div>
     </div>
   );
 };

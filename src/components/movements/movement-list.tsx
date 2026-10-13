@@ -48,7 +48,7 @@ const MovementItem = ({
           setConfirming(false);
         }}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-4 py-3 text-start active:bg-hover"
+        className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-hover active:bg-hover"
       >
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${kindChipClass(movement.kind)}`}>
           <KindIcon kind={movement.kind} size={21} />

@@ -70,6 +70,24 @@ The database is configured field by field (`DB_HOST`, `DB_PORT`, `DB_USER`,
 `DB_CONNECTION_LIMIT`, `DB_POOL_MAX`), read in one place — `db/connection.ts` —
 by both the app's pool and drizzle-kit.
 
+## Layout and style
+
+- One page tree, two layouts: a phone column with a bottom tab bar, and from
+  `lg` up a dashboard with a right-hand sidebar (`components/layout`). Never
+  build a separate desktop page; spread the same page into columns with `lg:`.
+- Totals are always `StatTile`s inside a `SummaryCard` (`components/ui`);
+  money for any period is `MoneySummary`, stock is `StockSummary`, debts are
+  `OwedSummary`. Desktop lists are tables built from `components/ui/data-table.ts`,
+  with cards on a phone. Every table column is right-aligned (`text-start`).
+- Choices are tapped, not typed: filters open a `BottomSheet` (a dialog on
+  desktop); dates show via `DateField`, never the browser's "mm/dd/yyyy".
+- Format numbers only with `formatCount` / `formatMoney` / `formatSigned`:
+  they wrap signed numbers in a left-to-right isolate so "−15" does not turn
+  into "15-" in right-to-left text.
+- Any period is cheap: `getLedger` starts a window from the stock before it
+  (one parallel round trip), the movements log pages and sums in SQL, and the
+  CSV export streams in batches — keep it that way for years of data.
+
 ## Gotchas
 
 - The database is far from a dev machine (~2 s to connect, ~280 ms per query).

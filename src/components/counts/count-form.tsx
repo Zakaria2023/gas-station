@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useCountForm } from "@/app/counts/use-count-form";
+import { ActionBar } from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { CylinderIcon } from "@/components/ui/cylinder-icon";
 import { Field } from "@/components/ui/field";
@@ -31,8 +32,8 @@ export const CountForm = ({ defaults, expected, counted }: CountFormProps) => {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <div className="flex flex-col gap-4 px-4 pt-1 pb-40">
-        <p className="px-1 text-sm text-muted">
+      <div className="flex flex-col gap-4 px-4 pt-1 pb-40 lg:grid lg:max-w-5xl lg:grid-cols-2 lg:gap-5">
+        <p className="px-1 text-sm text-muted lg:col-span-2">
           اكتب اللي عندك فعلاً بالمحل أول هذا اليوم. الأرقام الرمادية هي المتوقع حسب الحركات. اترك الصنف فاضي إذا ما جردته.
         </p>
         {cylinderTypes.map((type) => (
@@ -78,22 +79,21 @@ export const CountForm = ({ defaults, expected, counted }: CountFormProps) => {
             </div>
           </section>
         ))}
-        <section className="rounded-card bg-surface p-4 shadow-card">
+        <section className="rounded-card bg-surface p-4 shadow-card lg:col-span-2">
           <Field label="ملاحظة" error={errors.note?.message}>
             <Textarea rows={2} {...register("note")} placeholder="اختياري، مثلاً: وصلت سيارة المعمل" />
           </Field>
         </section>
-        <FormError message={removeState.error} />
-      </div>
-
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-xl flex-col gap-2 px-4 py-3">
-          <FormError message={state.error} />
-          <Button type="submit" size="lg" block disabled={isPending}>
-            {isPending ? "جارٍ الحفظ…" : "حفظ الجرد"}
-          </Button>
+        <div className="lg:col-span-2">
+          <FormError message={removeState.error} />
         </div>
       </div>
+
+      <ActionBar error={state.error}>
+        <Button type="submit" size="lg" block disabled={isPending}>
+          {isPending ? "جارٍ الحفظ…" : "حفظ الجرد"}
+        </Button>
+      </ActionBar>
     </form>
   );
 };

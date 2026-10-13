@@ -1,8 +1,9 @@
 import { ClipboardCheck, ClipboardList, Plus, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { MovementList } from "@/components/movements/movement-list";
-import { DayAccount } from "@/components/today/day-account";
+import { MoneySummary } from "@/components/money/money-summary";
 import { DayNav } from "@/components/today/day-nav";
+import { DayStats } from "@/components/today/day-stats";
 import { DayTable } from "@/components/today/day-table";
 import { StockCard } from "@/components/today/stock-card";
 import { buttonClasses } from "@/components/ui/button";
@@ -12,8 +13,9 @@ import { Toast } from "@/components/ui/toast";
 import { CylinderType, cylinderTypes } from "@/db/enum";
 import { CYLINDER_TYPE_LABELS } from "@/db/label";
 import { toMovementViews } from "@/lib/movement-view";
-import { stockValue } from "@/lib/pricing";
-import { getDayMovements, getDayStock, getPriceList } from "@/services";
+import { summaryRowsOf, sumAmounts } from "@/lib/ledger";
+import { dayAccount, stockValue } from "@/lib/pricing";
+import { getDayMovements, getDayStock, getPriceList, getTotalOwed } from "@/services";
 import { addDays, formatLongDay, isIsoDate, relativeDayName, todayIso } from "@/utils";
 
 type Props = {
@@ -30,7 +32,12 @@ const TodayPage = async ({ searchParams }: Props) => {
   const date = isIsoDate(asked) && asked <= today ? asked : today;
   const saved = first(params.saved);
 
-  const [stock, rows, prices] = await Promise.all([getDayStock(date), getDayMovements(date), getPriceList(date)]);
+  const [stock, rows, prices, owed] = await Promise.all([
+    getDayStock(date),
+    getDayMovements(date),
+    getPriceList(date),
+    getTotalOwed(),
+  ]);
   const movements = toMovementViews(rows);
   // The stock is worth the day's prices: raising a price revalues what is left.
   const values = Object.fromEntries(
@@ -44,6 +51,8 @@ const TodayPage = async ({ searchParams }: Props) => {
     (type) => stock[type].closing.full < 0 || stock[type].closing.empty < 0,
   );
   const nextDay = date < today ? addDays(date, 1) : null;
+  const totalStockValue = cylinderTypes.reduce((sum, type) => sum + values[type].total, 0);
+  const income = dayAccount(sumAmounts(cylinderTypes.map((type) => stock[type]))).income;
 
   return (
     <>
@@ -53,9 +62,19 @@ const TodayPage = async ({ searchParams }: Props) => {
         actions={<DayNav date={date} previous={addDays(date, -1)} next={nextDay} today={today} />}
       />
 
-      <div className="flex flex-col gap-3 px-4">
+      <div className="flex flex-col gap-3 px-4 lg:grid lg:grid-cols-12 lg:items-start lg:gap-5">
+        {!nothingYet && (
+          <DayStats
+            income={income}
+            stockValue={totalStockValue}
+            owedMoney={owed.money}
+            owedCylinders={owed.total}
+            movementCount={movements.length}
+          />
+        )}
+
         {nothingYet ? (
-          <section className="rounded-card bg-surface shadow-card">
+          <section className="rounded-card bg-surface shadow-card lg:col-span-12">
             <EmptyState
               icon={<ClipboardCheck size={26} />}
               title="ابدأ بجرد أول اليوم"
@@ -69,11 +88,11 @@ const TodayPage = async ({ searchParams }: Props) => {
             />
           </section>
         ) : (
-          <>
+          <div className="flex flex-col gap-3 lg:col-span-12 lg:grid lg:grid-cols-2 lg:gap-5">
             {negative.length > 0 && (
               <Link
                 href={`/counts/new?date=${date}`}
-                className="flex items-start gap-3 rounded-card bg-danger-tint p-4 text-danger"
+                className="flex items-start gap-3 rounded-card bg-danger-tint p-4 text-danger lg:col-span-2"
               >
                 <TriangleAlert size={22} className="mt-0.5 shrink-0" />
                 <span className="text-sm">
@@ -89,15 +108,15 @@ const TodayPage = async ({ searchParams }: Props) => {
             ))}
             <Link
               href={`/counts/new?date=${date}`}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-control text-sm font-bold text-primary active:bg-primary-tint"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-control text-sm font-bold text-primary active:bg-primary-tint lg:col-span-2 lg:-my-2"
             >
               <ClipboardCheck size={18} />
               {cylinderTypes.some((type) => stock[type].counted) ? "تعديل جرد أول اليوم" : "تسجيل جرد أول اليوم"}
             </Link>
-          </>
+          </div>
         )}
 
-        <section className="rounded-card bg-surface shadow-card">
+        <section className="rounded-card bg-surface shadow-card lg:col-span-7">
           <div className="flex items-center justify-between px-4 pt-4 pb-1">
             <h2 className="text-base font-bold text-ink">
               الحركات
@@ -121,20 +140,45 @@ const TodayPage = async ({ searchParams }: Props) => {
             <EmptyState
               icon={<ClipboardList size={26} />}
               title="ما في حركات"
-              description={date === today ? "اضغط + تحت لتسجيل أول حركة اليوم." : "ما انسجّلت حركات بهذا اليوم."}
+              description={date === today ? "ما انسجّلت حركات اليوم بعد." : "ما انسجّلت حركات بهذا اليوم."}
+              action={
+                <Link
+                  href={date === today ? "/movements/new" : `/movements/new?date=${date}`}
+                  className={buttonClasses({ variant: "secondary" })}
+                >
+                  <Plus size={18} />
+                  حركة جديدة
+                </Link>
+              }
             />
           )}
         </section>
 
         {!nothingYet && (
-          <DayAccount
-            stock={stock}
-            hasPrices={hasPrices}
-            stockValue={cylinderTypes.reduce((sum, type) => sum + values[type].total, 0)}
-          />
+          <div className="flex flex-col gap-3 lg:col-span-5 lg:gap-5">
+            <MoneySummary
+              title="حساب اليوم"
+              periodLabel={relativeDayName(date, today)}
+              rows={summaryRowsOf({ household: [stock.household], industrial: [stock.industrial] })}
+              action={
+                <Link href="/prices" className="shrink-0 text-sm font-bold text-primary">
+                  الأسعار
+                </Link>
+              }
+              notice={
+                !hasPrices && (
+                  <p className="rounded-control bg-warning-tint px-3 py-2.5 text-sm text-warning">
+                    ما في أسعار بعد، فالمبالغ صفر.{" "}
+                    <Link href="/prices" className="font-bold underline">
+                      حدّد الأسعار
+                    </Link>
+                  </p>
+                )
+              }
+            />
+            <DayTable stock={stock} />
+          </div>
         )}
-
-        {!nothingYet && <DayTable stock={stock} />}
       </div>
 
       {saved && <Toast key={saved} message="تم حفظ الحركة" />}

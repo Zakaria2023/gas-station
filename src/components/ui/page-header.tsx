@@ -13,7 +13,7 @@ type PageHeaderProps = {
 /** The bar at the top of every screen; it stays put while the page scrolls under it. */
 export const PageHeader = ({ title, subtitle, backHref, actions }: PageHeaderProps) => (
   <header className="pt-safe sticky top-0 z-20 bg-page/85 backdrop-blur-md">
-    <div className="flex min-h-16 items-center gap-2 px-4 py-2">
+    <div className="flex min-h-16 items-center gap-2 px-4 py-2 lg:min-h-20 lg:pt-4">
       {backHref && (
         <Link
           href={backHref}
@@ -25,8 +25,8 @@ export const PageHeader = ({ title, subtitle, backHref, actions }: PageHeaderPro
         </Link>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-[22px] leading-tight font-extrabold text-ink">{title}</h1>
-        {subtitle && <div className="mt-0.5 truncate text-sm text-muted">{subtitle}</div>}
+        <h1 className="truncate text-[22px] leading-tight font-extrabold text-ink lg:text-[28px]">{title}</h1>
+        {subtitle && <div className="mt-0.5 truncate text-sm text-muted lg:text-base">{subtitle}</div>}
       </div>
       {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
     </div>

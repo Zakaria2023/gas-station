@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useCustomerForm } from "@/app/customers/use-customer-form";
+import { ActionBar } from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
@@ -22,7 +23,7 @@ export const CustomerForm = (props: CustomerFormProps) => {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <div className="flex flex-col gap-4 px-4 pt-1 pb-40">
+      <div className="flex flex-col gap-4 px-4 pt-1 pb-40 lg:max-w-2xl">
         <section className="flex flex-col gap-4 rounded-card bg-surface p-4 shadow-card">
           <Field label="الاسم" error={errors.name?.message} hint="الاسم والعائلة، حتى ما يتلخبط مع زبون ثاني.">
             <Input {...register("name")} invalid={Boolean(errors.name)} autoFocus={props.mode === "add"} />
@@ -66,14 +67,11 @@ export const CustomerForm = (props: CustomerFormProps) => {
         )}
       </div>
 
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-xl flex-col gap-2 px-4 py-3">
-          <FormError message={state.error} />
-          <Button type="submit" size="lg" block disabled={isPending}>
-            {isPending ? "جارٍ الحفظ…" : props.mode === "edit" ? "حفظ التعديل" : "إضافة الزبون"}
-          </Button>
-        </div>
-      </div>
+      <ActionBar error={state.error}>
+        <Button type="submit" size="lg" block disabled={isPending}>
+          {isPending ? "جارٍ الحفظ…" : props.mode === "edit" ? "حفظ التعديل" : "إضافة الزبون"}
+        </Button>
+      </ActionBar>
     </form>
   );
 };

@@ -3,12 +3,13 @@
 import { ReactNode } from "react";
 import { usePricesForm } from "@/app/prices/use-prices-form";
 import { GROUP_LABELS, kindChipClass, KindIcon } from "@/components/movements/kind-style";
+import { ActionBar } from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { CylinderIcon } from "@/components/ui/cylinder-icon";
 import { Field } from "@/components/ui/field";
-import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { TYPE_TEXT } from "@/components/ui/type-badge";
 import { CylinderType, cylinderTypes, MovementKind } from "@/db/enum";
 import { CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
 import { kindsInGroup, movementGroups } from "@/lib/movement-rules";
@@ -44,7 +45,7 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <div className="flex flex-col gap-4 px-4 pt-1 pb-40">
+      <div className="flex flex-col gap-4 px-4 pt-1 pb-40 lg:max-w-4xl lg:gap-5">
         <section className="rounded-card bg-surface p-4 shadow-card">
           <Field
             label="تسري الأسعار من"
@@ -55,27 +56,37 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
           </Field>
         </section>
 
-        <Segmented
-          label="الصنف"
-          size="lg"
-          value={shownType}
-          onChange={setShownType}
-          options={cylinderTypes.map((type) => ({
-            value: type,
-            label: CYLINDER_TYPE_LABELS[type],
-            icon: <CylinderIcon filled size={20} />,
-            selectedClassName: TYPE_SELECTED[type],
-          }))}
-        />
+        <div className="lg:hidden">
+          <Segmented
+            label="الصنف"
+            size="lg"
+            value={shownType}
+            onChange={setShownType}
+            options={cylinderTypes.map((type) => ({
+              value: type,
+              label: CYLINDER_TYPE_LABELS[type],
+              icon: <CylinderIcon filled size={20} />,
+              selectedClassName: TYPE_SELECTED[type],
+            }))}
+          />
+        </div>
 
+        {/* Phone: one type at a time, picked above. Desktop: both types side by side in columns. */}
         {movementGroups.map((group) => (
           <section key={group} className="rounded-card bg-surface shadow-card">
-            <h2 className="px-4 pt-4 text-sm font-extrabold text-muted">{GROUP_LABELS[group]}</h2>
+            <div className="flex items-center gap-3 px-4 pt-4">
+              <h2 className="flex-1 text-sm font-extrabold text-muted">{GROUP_LABELS[group]}</h2>
+              {cylinderTypes.map((type) => (
+                <span key={type} className={`hidden w-40 text-center text-xs font-extrabold lg:block ${TYPE_TEXT[type]}`}>
+                  {CYLINDER_TYPE_LABELS[type]}
+                </span>
+              ))}
+            </div>
             <ul className="divide-y divide-hairline-soft">
               {kindsInGroup(group).map((kind) => {
-                const error = errors[shownType]?.[kind]?.message;
+                const error = errors[shownType]?.[kind]?.message ?? errors.household?.[kind]?.message ?? errors.industrial?.[kind]?.message;
                 return (
-                  <li key={`${shownType}-${kind}`} className="flex items-center gap-3 px-4 py-3">
+                  <li key={kind} className="flex items-center gap-3 px-4 py-3">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${kindChipClass(kind)}`}>
                       <KindIcon kind={kind} size={19} />
                     </span>
@@ -87,19 +98,24 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
                         ROLE_HINTS[kind] && <span className="block text-xs text-faint">{ROLE_HINTS[kind]}</span>
                       )}
                     </span>
-                    <span className="relative w-36 shrink-0">
-                      <Input
-                        {...register(`${shownType}.${kind}`)}
-                        aria-label={`سعر ${MOVEMENT_KIND_LABELS[kind]} ${CYLINDER_TYPE_LABELS[shownType]}`}
-                        inputMode="decimal"
-                        placeholder="—"
-                        invalid={Boolean(error)}
-                        className="pe-11 text-lg font-bold tabular"
-                      />
-                      <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs font-bold text-faint">
-                        {CURRENCY}
+                    {cylinderTypes.map((type) => (
+                      <span
+                        key={type}
+                        className={`relative w-36 shrink-0 lg:block lg:w-40 ${type === shownType ? "" : "hidden"}`}
+                      >
+                        <Input
+                          {...register(`${type}.${kind}`)}
+                          aria-label={`سعر ${MOVEMENT_KIND_LABELS[kind]} ${CYLINDER_TYPE_LABELS[type]}`}
+                          inputMode="decimal"
+                          placeholder="—"
+                          invalid={Boolean(errors[type]?.[kind])}
+                          className="pe-11 text-lg font-bold tabular"
+                        />
+                        <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-xs font-bold text-faint">
+                          {CURRENCY}
+                        </span>
                       </span>
-                    </span>
+                    ))}
                   </li>
                 );
               })}
@@ -110,14 +126,11 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
         {children}
       </div>
 
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-xl flex-col gap-2 px-4 py-3">
-          <FormError message={state.error} />
-          <Button type="submit" size="lg" block disabled={isPending}>
-            {isPending ? "جارٍ الحفظ…" : "حفظ الأسعار"}
-          </Button>
-        </div>
-      </div>
+      <ActionBar error={state.error}>
+        <Button type="submit" size="lg" block disabled={isPending}>
+          {isPending ? "جارٍ الحفظ…" : "حفظ الأسعار"}
+        </Button>
+      </ActionBar>
     </form>
   );
 };

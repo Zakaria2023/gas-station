@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { kindChipClass, KindIcon } from "@/components/movements/kind-style";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatTile } from "@/components/ui/stat-tile";
 import { movementKinds } from "@/db/enum";
 import { CYLINDER_STATE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
 import { MOVEMENT_EFFECTS } from "@/lib/movement-rules";
@@ -8,18 +9,14 @@ import { formatSigned } from "@/utils";
 
 export const metadata: Metadata = { title: "قواعد الحركات" };
 
+/** One effect in the app's tile style: green when it adds, red when it takes away, grey when it does nothing. */
 const Effect = ({ label, value }: { label: string; value: number }) => (
-  <div className="rounded-control bg-hover px-2 py-1.5 text-center">
-    <p className="text-[11px] font-semibold text-muted">{label}</p>
-    <p
-      dir="ltr"
-      className={`text-base font-extrabold tabular ${
-        value > 0 ? "text-success" : value < 0 ? "text-danger" : "text-faint"
-      }`}
-    >
-      {value === 0 ? "—" : formatSigned(value)}
-    </p>
-  </div>
+  <StatTile
+    label={label}
+    value={value === 0 ? "—" : formatSigned(value)}
+    tone={value > 0 ? "success" : "danger"}
+    empty={value === 0}
+  />
 );
 
 /**
@@ -30,12 +27,12 @@ const RulesPage = () => {
   return (
     <>
       <PageHeader title="قواعد الحركات" subtitle="لكل جرة واحدة" backHref="/more" />
-      <div className="flex flex-col gap-2.5 px-4">
+      <div className="flex flex-col gap-2.5 px-4 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {movementKinds.map((kind) => {
           const { stock, debt } = MOVEMENT_EFFECTS[kind];
           return (
-            <section key={kind} className="rounded-card bg-surface p-3.5 shadow-card">
-              <div className="mb-2.5 flex items-center gap-3">
+            <section key={kind} className="rounded-card bg-surface p-3 shadow-card">
+              <div className="mb-2.5 flex items-center gap-3 px-1 pt-1">
                 <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${kindChipClass(kind)}`}>
                   <KindIcon kind={kind} size={20} />
                 </span>

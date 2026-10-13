@@ -1,22 +1,15 @@
 "use client";
 
-import { CalendarDays, House, Menu, Plus, Users, type LucideIcon } from "lucide-react";
+import { CalendarDays, Menu, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
 
-type Tab = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-};
-
-// Right to left: the first tab sits under the right thumb.
-const LEADING: Tab[] = [
-  { href: "/", label: "اليوم", icon: House },
-  { href: "/customers", label: "الزبائن", icon: Users },
-];
-
-const TRAILING: Tab[] = [
+// Right to left: the first tab sits under the right thumb. The tools live
+// behind "المزيد" on a phone; the desktop sidebar lists them directly.
+const LEADING = MAIN_NAV.slice(0, 2);
+// One "السجل" tab covers both views of the record; the page's own tabs switch between them.
+const TRAILING: NavItem[] = [
   { href: "/history", label: "السجل", icon: CalendarDays },
   { href: "/more", label: "المزيد", icon: Menu },
 ];
@@ -29,17 +22,18 @@ const isFocusScreen = (pathname: string) =>
   pathname.endsWith("/new") ||
   pathname.endsWith("/edit");
 
-const isActive = (pathname: string, href: string) =>
-  href === "/" ? pathname === "/" : pathname.startsWith(href);
-
+/** The phone's tab bar; from `lg` up the sidebar takes its place. */
 export const BottomNav = () => {
   const pathname = usePathname();
   if (isFocusScreen(pathname)) {
     return null;
   }
 
-  const renderTab = ({ href, label, icon: Icon }: Tab) => {
-    const active = isActive(pathname, href) || (href === "/more" && pathname.startsWith("/rules"));
+  const renderTab = ({ href, label, icon: Icon }: NavItem) => {
+    const active =
+      isActive(pathname, href) ||
+      (href === "/history" && isActive(pathname, "/movements")) ||
+      (href === "/more" && TOOLS_NAV.some((tool) => isActive(pathname, tool.href)));
     return (
       <Link
         key={href}
@@ -64,10 +58,10 @@ export const BottomNav = () => {
   return (
     <>
       {/* Keeps the last row of a page clear of the bar. */}
-      <div aria-hidden="true" className="h-28" />
+      <div aria-hidden="true" className="h-28 lg:hidden" />
       <nav
         aria-label="التنقل"
-        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/92 backdrop-blur-md"
+        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/92 backdrop-blur-md lg:hidden"
       >
         <div className="mx-auto grid h-16 max-w-xl grid-cols-5">
           {LEADING.map(renderTab)}

@@ -42,7 +42,7 @@ export const DayTable = ({ stock }: DayTableProps) => (
           <tr className="text-xs text-muted">
             <th className="px-2 py-2 text-start font-semibold" />
             {cylinderTypes.map((type) => (
-              <th key={type} className={`px-2 py-2 text-end font-extrabold ${TYPE_TEXT[type]}`}>
+              <th key={type} className={`px-2 py-2 text-start font-extrabold ${TYPE_TEXT[type]}`}>
                 {CYLINDER_TYPE_LABELS[type]}
               </th>
             ))}
@@ -57,7 +57,7 @@ export const DayTable = ({ stock }: DayTableProps) => (
                 return (
                   <td
                     key={type}
-                    className={`px-2 py-2 text-end tabular ${
+                    className={`px-2 py-2 text-start tabular ${
                       value < 0 ? "font-bold text-danger" : row.strong ? "font-bold text-ink" : value ? "text-ink" : "text-faint"
                     }`}
                   >

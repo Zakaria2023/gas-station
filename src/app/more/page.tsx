@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, ClipboardCheck, Tags, type LucideIcon } from "lucide-react";
+import { BookOpen, ChevronLeft, ClipboardCheck, List, Tags, type LucideIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,6 +13,7 @@ type Item = {
 };
 
 const ITEMS: Item[] = [
+  { href: "/movements", label: "كل الحركات", hint: "كل حركة بسعرها، لأي فترة، مع تنزيل Excel", icon: List },
   { href: "/counts/new", label: "جرد أول اليوم", hint: "سجّل اللي عندك فعلاً بالمحل", icon: ClipboardCheck },
   { href: "/prices", label: "الأسعار", hint: "سعر الجرة لكل حركة، ومن أي يوم", icon: Tags },
   { href: "/rules", label: "قواعد الحركات", hint: "شو بتعمل كل حركة بالمخزون والديون", icon: BookOpen },
@@ -21,7 +22,7 @@ const ITEMS: Item[] = [
 const MorePage = () => (
   <>
     <PageHeader title="المزيد" />
-    <div className="px-4">
+    <div className="px-4 lg:max-w-2xl">
       <ul className="divide-y divide-hairline-soft rounded-card bg-surface shadow-card">
         {ITEMS.map(({ href, label, hint, icon: Icon }) => (
           <li key={href}>
