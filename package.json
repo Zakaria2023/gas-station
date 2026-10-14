@@ -13,7 +13,8 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "db:push": "dotenv -e .env.local -- drizzle-kit push"
+    "db:push": "dotenv -e .env.local -- drizzle-kit push",
+    "db:seed-admin": "dotenv -e .env.local -- tsx db/seed-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

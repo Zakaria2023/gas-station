@@ -1,4 +1,9 @@
-import { CylinderState, CylinderType, MovementKind } from "./enum";
+import { CylinderState, CylinderType, MovementKind, UserRole } from "./enum";
+
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  admin: "مدير",
+  staff: "موظف",
+};
 
 export const CYLINDER_TYPE_LABELS: Record<CylinderType, string> = {
   household: "منزلي",

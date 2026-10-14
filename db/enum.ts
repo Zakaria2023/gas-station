@@ -36,6 +36,11 @@ export const movementKinds = [
 
 export type MovementKind = (typeof movementKinds)[number];
 
+/** An admin also manages the users; staff do the daily work. */
+export const userRoles = ["admin", "staff"] as const satisfies readonly string[];
+
+export type UserRole = (typeof userRoles)[number];
+
 /** The kinds that lend or pay back money: they have no cylinder type, and their amount is the price of one. */
 export const cashKinds = ["cash_debt", "cash_return"] as const satisfies readonly MovementKind[];
 
