@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CalendarDays, ChevronDown } from "lucide-react";
+import { ArrowLeft, Banknote, CalendarDays, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Controller } from "react-hook-form";
 import { CustomerOption } from "@/app/movements/use-customer-picker";
@@ -73,7 +73,7 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
     },
   } = movement;
 
-  const overOwed = movement.owed !== null && movement.quantity > movement.owed;
+  const { overOwed, cash } = movement;
 
   return (
     <form onSubmit={movement.onSubmit} noValidate>
@@ -81,24 +81,32 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
       <div className="flex flex-col gap-6 px-4 pt-1 pb-44 lg:grid lg:grid-cols-2 lg:items-start lg:gap-8 lg:pb-32">
         <div className="flex flex-col gap-6">
           <Section title="الصنف">
-            <Controller
-              control={control}
-              name="cylinderType"
-              render={({ field }) => (
-                <Segmented
-                  label="الصنف"
-                  size="lg"
-                  value={field.value}
-                  onChange={(next) => movement.choose({ cylinderType: next })}
-                  options={cylinderTypes.map((type) => ({
-                    value: type,
-                    label: CYLINDER_TYPE_LABELS[type],
-                    icon: <CylinderIcon filled size={20} />,
-                    selectedClassName: TYPE_SELECTED[type],
-                  }))}
-                />
-              )}
-            />
+            {cash ? (
+              // Same height as the type switch, so the tiles below do not jump under the finger.
+              <p className="flex min-h-14 items-center gap-2 rounded-control bg-hairline-soft px-4 text-sm text-muted">
+                <Banknote size={20} className="shrink-0" />
+                المصاري ما إلها صنف: بس المبلغ.
+              </p>
+            ) : (
+              <Controller
+                control={control}
+                name="cylinderType"
+                render={({ field }) => (
+                  <Segmented
+                    label="الصنف"
+                    size="lg"
+                    value={field.value}
+                    onChange={(next) => movement.choose({ cylinderType: next })}
+                    options={cylinderTypes.map((type) => ({
+                      value: type,
+                      label: CYLINDER_TYPE_LABELS[type],
+                      icon: <CylinderIcon filled size={20} />,
+                      selectedClassName: TYPE_SELECTED[type],
+                    }))}
+                  />
+                )}
+              />
+            )}
           </Section>
 
           <Section title="نوع الحركة">
@@ -131,55 +139,57 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
             </Section>
           )}
 
-          <Section title="العدد">
-            <Controller
-              control={control}
-              name="quantity"
-              render={({ field }) => (
-                <Stepper
-                  label="العدد"
-                  value={field.value}
-                  onChange={field.onChange}
-                  max={MAX_QUANTITY}
-                  invalid={Boolean(errors.quantity) || overOwed}
-                />
+          {!cash && (
+            <Section title="العدد">
+              <Controller
+                control={control}
+                name="quantity"
+                render={({ field }) => (
+                  <Stepper
+                    label="العدد"
+                    value={field.value}
+                    onChange={field.onChange}
+                    max={MAX_QUANTITY}
+                    invalid={Boolean(errors.quantity) || overOwed}
+                  />
+                )}
+              />
+              <div className="grid grid-cols-4 gap-2">
+                {QUICK_AMOUNTS.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => setValue("quantity", amount, { shouldValidate: true })}
+                    className={`min-h-11 rounded-control text-base font-bold tabular transition active:scale-95 ${
+                      movement.quantity === amount
+                        ? "bg-primary-tint text-primary ring-2 ring-primary/30"
+                        : "bg-surface text-ink shadow-card"
+                    }`}
+                  >
+                    {amount}
+                  </button>
+                ))}
+              </div>
+              {errors.quantity && <p className="px-1 text-sm text-danger">{errors.quantity.message}</p>}
+              {movement.owed !== null && movement.owedBucket && movement.owedBucket !== "cash" && (
+                <p className={`px-1 text-sm font-semibold ${overOwed ? "text-danger" : "text-muted"}`}>
+                  {movement.owed > 0
+                    ? `عليه ${formatCount(movement.owed)} ${CYLINDER_TYPE_LABELS[movement.cylinderType]} ${
+                        CYLINDER_STATE_LABELS[movement.owedBucket.state]
+                      }${overOwed ? " فقط" : ""}`
+                    : "هذا الزبون ما عليه من هذا الصنف"}
+                </p>
               )}
-            />
-            <div className="grid grid-cols-4 gap-2">
-              {QUICK_AMOUNTS.map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => setValue("quantity", amount, { shouldValidate: true })}
-                  className={`min-h-11 rounded-control text-base font-bold tabular transition active:scale-95 ${
-                    movement.quantity === amount
-                      ? "bg-primary-tint text-primary ring-2 ring-primary/30"
-                      : "bg-surface text-ink shadow-card"
-                  }`}
-                >
-                  {amount}
-                </button>
-              ))}
-            </div>
-            {errors.quantity && <p className="px-1 text-sm text-danger">{errors.quantity.message}</p>}
-            {movement.owed !== null && (
-              <p className={`px-1 text-sm font-semibold ${overOwed ? "text-danger" : "text-muted"}`}>
-                {movement.owed > 0
-                  ? `عليه ${formatCount(movement.owed)} ${CYLINDER_TYPE_LABELS[movement.cylinderType]} ${
-                      CYLINDER_STATE_LABELS[movement.owedBucket!.state]
-                    }${overOwed ? " فقط" : ""}`
-                  : "هذا الزبون ما عليه من هذا الصنف"}
-              </p>
-            )}
-          </Section>
+            </Section>
+          )}
 
-          <Section title="سعر الواحدة">
+          <Section title={cash ? "المبلغ" : "سعر الواحدة"}>
             <div className="relative">
               <Input
                 {...register("unitPrice")}
                 inputMode="decimal"
-                placeholder="بدون سعر"
-                invalid={Boolean(errors.unitPrice)}
+                placeholder={cash ? "0" : "بدون سعر"}
+                invalid={Boolean(errors.unitPrice) || (cash && overOwed)}
                 className="min-h-14 pe-14 text-2xl font-extrabold tabular"
               />
               <span className="pointer-events-none absolute inset-y-0 end-4 flex items-center text-base font-bold text-muted">
@@ -187,7 +197,15 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
               </span>
             </div>
             {errors.unitPrice && <p className="px-1 text-sm text-danger">{errors.unitPrice.message}</p>}
-            {movement.listPrice === null ? (
+            {cash ? (
+              movement.owed !== null && (
+                <p className={`px-1 text-sm font-semibold ${overOwed ? "text-danger" : "text-muted"}`}>
+                  {movement.owed > 0
+                    ? `عليه ${formatMoney(movement.owed)} مصاري${overOwed ? " فقط" : ""}`
+                    : "هذا الزبون ما عليه مصاري"}
+                </p>
+              )
+            ) : movement.listPrice === null ? (
               <p className="px-1 text-sm text-muted">
                 ما في سعر لهذه الحركة بلائحة الأسعار.{" "}
                 <Link href="/prices" className="font-bold text-primary">
@@ -205,7 +223,7 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
             ) : (
               <p className="px-1 text-sm text-muted">من لائحة الأسعار، وبتقدر تغيّره لهذه الحركة بس.</p>
             )}
-            {movement.unitPrice !== null && movement.quantity > 0 && (
+            {!cash && movement.unitPrice !== null && movement.quantity > 0 && (
               <div className="flex items-center justify-between rounded-control bg-primary-tint px-4 py-3">
                 <span className="text-sm font-semibold text-primary tabular">
                   {formatCount(movement.quantity)} × {formatMoney(movement.unitPrice)}
@@ -250,7 +268,9 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
         <Button type="submit" size="lg" block disabled={movement.isPending || overOwed}>
           {movement.isPending
             ? "جارٍ الحفظ…"
-            : `حفظ · ${MOVEMENT_KIND_LABELS[movement.kind]} ${
+            : cash
+              ? `حفظ · ${MOVEMENT_KIND_LABELS[movement.kind]}${movement.total > 0 ? ` · ${formatMoney(movement.total)}` : ""}`
+              : `حفظ · ${MOVEMENT_KIND_LABELS[movement.kind]} ${
                 movement.quantity > 0 ? formatCount(movement.quantity) : ""
               } ${CYLINDER_TYPE_LABELS[movement.cylinderType]}${
                 movement.unitPrice !== null && movement.total > 0 ? ` · ${formatMoney(movement.total)}` : ""

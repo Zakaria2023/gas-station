@@ -45,7 +45,11 @@ export const LogTable = ({ movements }: LogTableProps) => (
               </span>
             </td>
             <td className={TD}>
-              <TypeBadge cylinderType={movement.cylinderType} />
+              {movement.cylinderType ? (
+                <TypeBadge cylinderType={movement.cylinderType} />
+              ) : (
+                <span className="text-faint">—</span>
+              )}
             </td>
             <td className={TD}>
               {movement.customerName && movement.customerUuid ? (
@@ -56,9 +60,12 @@ export const LogTable = ({ movements }: LogTableProps) => (
                 <span className="text-faint">—</span>
               )}
             </td>
-            <td className={`${TD} text-base font-extrabold text-ink tabular`}>{formatCount(movement.quantity)}</td>
+            {/* Money lent or paid back is only an amount. */}
+            <td className={`${TD} text-base font-extrabold text-ink tabular`}>
+              {movement.cylinderType ? formatCount(movement.quantity) : <span className="font-normal text-faint">—</span>}
+            </td>
             <td className={`${TD} whitespace-nowrap text-muted tabular`}>
-              {movement.unitPrice === null ? "—" : formatMoney(movement.unitPrice)}
+              {movement.unitPrice === null || !movement.cylinderType ? "—" : formatMoney(movement.unitPrice)}
             </td>
             <td className={`${TD} font-bold whitespace-nowrap text-ink tabular`}>
               {movement.unitPrice === null ? "—" : formatMoney(amountOf(movement.quantity, movement.unitPrice))}

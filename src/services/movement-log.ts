@@ -1,6 +1,7 @@
 import "server-only";
-import { and, asc, count, desc, eq, gt, gte, lte, SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, lte, SQL } from "drizzle-orm";
 import { db } from "@/db";
+import { cashKinds } from "@/db/enum";
 import { Customers, Movements } from "@/db/schema";
 import { KindSummaryRow } from "@/lib/ledger";
 import { MovementFilters } from "@/lib/movement-filters";
@@ -84,6 +85,30 @@ export const summarizeMovements = (filters: MovementFilters): Promise<MovementSu
     .from(Movements)
     .leftJoin(Customers, eq(Movements.customerId, Customers.id))
     .where(whereOf(filters))
+    .groupBy(Movements.kind, Movements.cylinderType);
+
+/**
+ * Money lent and paid back from `from` to `to`, per kind. The ledger walks
+ * cylinders type by type and leaves these out; a day's or a month's money
+ * adds them to its rows.
+ */
+export const summarizeCash = (from: string, to: string): Promise<MovementSummaryRow[]> =>
+  db
+    .select({
+      kind: Movements.kind,
+      cylinderType: Movements.cylinderType,
+      quantity: movementSums.quantity,
+      amount: movementSums.amount,
+      count: movementSums.count,
+    })
+    .from(Movements)
+    .where(
+      and(
+        inArray(Movements.kind, cashKinds),
+        gte(Movements.businessDate, from),
+        lte(Movements.businessDate, to),
+      ),
+    )
     .groupBy(Movements.kind, Movements.cylinderType);
 
 /**

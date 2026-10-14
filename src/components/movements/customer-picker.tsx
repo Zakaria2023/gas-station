@@ -7,14 +7,14 @@ import { CustomerAvatar } from "@/components/customers/customer-avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
-import { CylinderState, CylinderType } from "@/db/enum";
-import { formatCount } from "@/utils/text";
+import { OwedBucket } from "@/lib/balances";
+import { formatCount, formatMoney } from "@/utils/text";
 
 type CustomerPickerProps = {
   customers: CustomerOption[];
   value: string;
   onChange: (uuid: string) => void;
-  owedBucket: { cylinderType: CylinderType; state: CylinderState } | null;
+  owedBucket: OwedBucket | null;
   invalid?: boolean;
 };
 
@@ -108,7 +108,13 @@ export const CustomerPicker = ({ customers, value, onChange, owedBucket, invalid
                     <span className="block truncate text-base font-bold text-ink">{customer.name}</span>
                     {owedBucket ? (
                       <span className={`block text-sm ${owed > 0 ? "font-semibold text-debts" : "text-faint"}`}>
-                        {owed > 0 ? `عليه ${formatCount(owed)}` : "ما عليه من هذا الصنف"}
+                        {owedBucket === "cash"
+                          ? owed > 0
+                            ? `عليه ${formatMoney(owed)}`
+                            : "ما عليه مصاري"
+                          : owed > 0
+                            ? `عليه ${formatCount(owed)}`
+                            : "ما عليه من هذا الصنف"}
                       </span>
                     ) : (
                       <span className="mt-0.5 block">

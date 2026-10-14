@@ -15,6 +15,8 @@ export type CylinderState = (typeof cylinderStates)[number];
  * Everything that moves cylinders in or out of the shop. The first eight are
  * the columns of the daily sheet (E to L); `refill` is the trip to the filling
  * plant, which the sheet covered by re-typing the morning counts by hand.
+ * `cash_debt` and `cash_return` move money, not cylinders: a customer borrows
+ * cash from the shop and pays it back.
  * What each one does to the stock and to a customer's debt is in
  * src/lib/movement-rules.ts — the one place those rules live.
  */
@@ -28,6 +30,13 @@ export const movementKinds = [
   "return_empty",
   "customer_empty_in",
   "refill",
+  "cash_debt",
+  "cash_return",
 ] as const satisfies readonly string[];
 
 export type MovementKind = (typeof movementKinds)[number];
+
+/** The kinds that lend or pay back money: they have no cylinder type, and their amount is the price of one. */
+export const cashKinds = ["cash_debt", "cash_return"] as const satisfies readonly MovementKind[];
+
+export type CashKind = (typeof cashKinds)[number];

@@ -133,7 +133,8 @@ export const sumAmounts = (days: LedgerDay[]): KindTotals => {
 /** One kind of one type over a period: how many cylinders, how much money, how many entries. */
 export type KindSummaryRow = {
   kind: MovementKind;
-  cylinderType: CylinderType;
+  /** Null for money lent or paid back. */
+  cylinderType: CylinderType | null;
   quantity: number;
   amount: number;
   count: number;

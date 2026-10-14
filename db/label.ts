@@ -20,4 +20,6 @@ export const MOVEMENT_KIND_LABELS: Record<MovementKind, string> = {
   return_empty: "رجع دين فاضي",
   customer_empty_in: "فاضي دخل زبون",
   refill: "تعبئة",
+  cash_debt: "دين مصاري",
+  cash_return: "رجع دين مصاري",
 };

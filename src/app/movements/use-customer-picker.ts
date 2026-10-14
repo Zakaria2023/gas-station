@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { CylinderState, CylinderType } from "@/db/enum";
-import { Balance, emptyBalance } from "@/lib/balances";
+import { Balance, emptyBalance, OwedBucket, owedIn } from "@/lib/balances";
 import { cleanName, foldArabic } from "@/utils/text";
 import { quickCreateCustomerAction } from "../customers/actions";
 
@@ -17,7 +16,7 @@ type UseCustomerPickerArgs = {
   customers: CustomerOption[];
   onSelect: (uuid: string) => void;
   /** For a return: the bucket that matters, so those who owe it come first. */
-  owedBucket: { cylinderType: CylinderType; state: CylinderState } | null;
+  owedBucket: OwedBucket | null;
 };
 
 /** The customer list's search, ordering and "add a new one by name" for the movement form. */
@@ -32,7 +31,7 @@ export const useCustomerPicker = ({ customers, onSelect, owedBucket }: UseCustom
   const all = useMemo(() => [...added, ...customers], [added, customers]);
 
   const owedOf = (customer: CustomerOption) =>
-    owedBucket ? customer.balance[owedBucket.cylinderType][owedBucket.state] : customer.balance.total;
+    owedBucket ? owedIn(customer.balance, owedBucket) : customer.balance.total;
 
   const visible = useMemo(() => {
     const term = foldArabic(query.trim());
@@ -45,7 +44,7 @@ export const useCustomerPicker = ({ customers, onSelect, owedBucket }: UseCustom
     if (!owedBucket) {
       return matches;
     }
-    const owed = (customer: CustomerOption) => customer.balance[owedBucket.cylinderType][owedBucket.state];
+    const owed = (customer: CustomerOption) => owedIn(customer.balance, owedBucket);
     return [...matches].sort((a, b) => owed(b) - owed(a));
   }, [all, query, owedBucket]);
 

@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { startTransition, useActionState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { CylinderType, MovementKind } from "@/db/enum";
-import { applyToStock, MOVEMENT_EFFECTS, needsCustomer, StockDelta } from "@/lib/movement-rules";
+import { bucketOf, owedIn } from "@/lib/balances";
+import { applyToStock, isCash, isReturn, needsCustomer, StockDelta } from "@/lib/movement-rules";
 import { amountOf, PriceList, priceFor } from "@/lib/pricing";
 import { priceInputValue } from "@/utils/text";
 import { movementFormSchema, MovementFormValues } from "@/validators/movement";
@@ -54,26 +55,28 @@ export const useMovementForm = ({ defaults, customers, stock, stockDate, prices 
   };
 
   const withCustomer = needsCustomer(kind);
-  const debt = MOVEMENT_EFFECTS[kind].debt;
+  // Money lent or paid back: no type, no count, only the amount typed in the price field.
+  const cash = isCash(kind);
+  const unitPrice = parsePrice(unitPriceText);
 
-  // A return is capped at what the chosen customer owes of that type and state.
-  const owedBucket = debt?.sign === -1 ? { cylinderType, state: debt.state } : null;
+  // A return is capped at what the chosen customer owes of that type and state, or of money.
+  const owedBucket = isReturn(kind) ? bucketOf(kind, cylinderType) : null;
   const customer = customers.find((option) => option.uuid === customerUuid);
-  const owed = owedBucket && customer ? customer.balance[owedBucket.cylinderType][owedBucket.state] : null;
+  const owed = owedBucket && customer ? owedIn(customer.balance, owedBucket) : null;
+  const overOwed = owed !== null && (cash ? (unitPrice ?? 0) : quantity) > owed;
 
   const before = stock[cylinderType];
   const after = quantity > 0 ? applyToStock(before, kind, quantity) : before;
-  // The preview only knows the stock of the day the form opened on.
-  const showPreview = businessDate === stockDate;
+  // The preview only knows the stock of the day the form opened on, and money moves no stock.
+  const showPreview = businessDate === stockDate && !cash;
 
-  const unitPrice = parsePrice(unitPriceText);
   const listPrice = priceFor(prices, cylinderType, kind);
-  const total = amountOf(quantity || 0, unitPrice);
+  const total = cash ? (unitPrice ?? 0) : amountOf(quantity || 0, unitPrice);
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(() => {
       // A customer only rides along on the kinds that need one.
-      dispatch({ ...values, customerUuid: withCustomer ? values.customerUuid : "" });
+      dispatch({ ...values, customerUuid: withCustomer ? values.customerUuid : "", quantity: cash ? 1 : values.quantity });
     });
   });
 
@@ -88,8 +91,10 @@ export const useMovementForm = ({ defaults, customers, stock, stockDate, prices 
     quantity,
     businessDate,
     withCustomer,
+    cash,
     owedBucket,
     owed,
+    overOwed,
     before,
     after,
     showPreview,

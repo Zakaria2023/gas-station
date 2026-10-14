@@ -32,6 +32,8 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow> = {
   return_empty: "settlement",
   customer_empty_in: "expense",
   refill: "expense",
+  cash_debt: "credit",
+  cash_return: "settlement",
 };
 
 /** Which price values the stock still in the shop, and the debts. */
@@ -40,10 +42,15 @@ export const STOCK_PRICE_KIND: Record<CylinderState, MovementKind> = {
   empty: "sell_empty",
 };
 
-/** The kinds the price list sets; the debts take the stock's prices. */
-export type PricedKind = Exclude<MovementKind, "debt_full" | "debt_empty" | "return_full" | "return_empty">;
+/** The kinds the price list sets; the debts take the stock's prices, and money is typed. */
+export type PricedKind = Exclude<
+  MovementKind,
+  "debt_full" | "debt_empty" | "return_full" | "return_empty" | "cash_debt" | "cash_return"
+>;
 
-export const pricedKinds = movementKinds.filter((kind): kind is PricedKind => !MOVEMENT_EFFECTS[kind].debt);
+export const pricedKinds = movementKinds.filter(
+  (kind): kind is PricedKind => !MOVEMENT_EFFECTS[kind].debt && !MOVEMENT_EFFECTS[kind].cash,
+);
 
 /** The list's price for one cylinder of a movement, or null when it has none. */
 export const priceFor = (list: PriceList, cylinderType: CylinderType, kind: MovementKind): number | null => {

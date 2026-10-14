@@ -1,6 +1,8 @@
 import {
   ArrowLeftRight,
+  BanknoteArrowDown,
   Factory,
+  HandCoins,
   NotebookPen,
   PackagePlus,
   ShoppingBag,
@@ -26,12 +28,15 @@ const KIND_ICONS: Record<MovementKind, LucideIcon> = {
   return_empty: Undo2,
   customer_empty_in: PackagePlus,
   refill: Factory,
+  cash_debt: HandCoins,
+  cash_return: BanknoteArrowDown,
 };
 
 const toneOf = (kind: MovementKind): Tone => {
   const effect = MOVEMENT_EFFECTS[kind];
-  if (effect.debt) {
-    return effect.debt.sign === 1 ? "debts" : "returns";
+  const sign = effect.debt?.sign ?? effect.cash;
+  if (sign) {
+    return sign === 1 ? "debts" : "returns";
   }
   return effect.group === "stock" ? "stock" : "sales";
 };
@@ -59,12 +64,16 @@ export const kindSelectedClass = (kind: MovementKind): string => TONE_SELECTED[t
 export const GROUP_LABELS: Record<MovementGroup, string> = {
   sales: "بيع وتبديل",
   debts: "ديون الزبائن",
+  cash: "دين مصاري",
   stock: "المخزون",
 };
 
 /** "يطلع مليان · يدخل فاضي" — what one of these does, read off the rules. */
 export const kindEffectText = (kind: MovementKind): string => {
-  const { stock, debt } = MOVEMENT_EFFECTS[kind];
+  const { stock, debt, cash } = MOVEMENT_EFFECTS[kind];
+  if (cash) {
+    return cash === 1 ? "يطلع مصاري من المحل · دين على الزبون" : "ترجع مصاري للمحل · ينقص دين الزبون";
+  }
   const parts: string[] = [];
   for (const state of ["full", "empty"] as const) {
     const word = state === "full" ? "مليان" : "فاضي";

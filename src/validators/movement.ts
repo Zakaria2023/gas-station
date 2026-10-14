@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cylinderTypes, movementKinds } from "@/db/enum";
-import { needsCustomer } from "@/lib/movement-rules";
+import { isCash, needsCustomer } from "@/lib/movement-rules";
 import { isIsoDate } from "@/utils/dates";
 
 export const MAX_QUANTITY = 5000;
@@ -26,6 +26,10 @@ export const movementFormSchema = z
   .superRefine((values, ctx) => {
     if (needsCustomer(values.kind) && !values.customerUuid) {
       ctx.addIssue({ code: "custom", path: ["customerUuid"], message: "اختر الزبون" });
+    }
+    // Money is only its amount, typed in the price field.
+    if (isCash(values.kind) && !(Number(values.unitPrice) > 0)) {
+      ctx.addIssue({ code: "custom", path: ["unitPrice"], message: "أدخل المبلغ" });
     }
   });
 

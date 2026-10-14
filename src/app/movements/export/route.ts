@@ -34,10 +34,11 @@ export const GET = (request: Request) => {
             [
               row.businessDate,
               MOVEMENT_KIND_LABELS[row.kind],
-              CYLINDER_TYPE_LABELS[row.cylinderType],
+              // Money lent or paid back has no type, count or unit price — only its amount.
+              row.cylinderType ? CYLINDER_TYPE_LABELS[row.cylinderType] : null,
               row.customerName,
-              row.quantity,
-              row.unitPrice,
+              row.cylinderType ? row.quantity : null,
+              row.cylinderType ? row.unitPrice : null,
               row.unitPrice === null ? null : amountOf(row.quantity, row.unitPrice),
               row.note,
               formatTime(row.createdAt, timeZone),

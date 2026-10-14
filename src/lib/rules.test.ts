@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { movementKinds } from "@/db/enum";
+import { cashKinds, movementKinds } from "@/db/enum";
 import { addDays, addMonths, isIsoDate, monthEnd, todayIso } from "@/utils/dates";
 import { foldArabic, formatCount, formatMoney, formatSigned } from "@/utils/text";
-import { balanceEntries, foldBalance } from "./balances";
+import { balanceEntries, bucketOf, foldBalance, owedIn } from "./balances";
 import { buildLedger, emptyTotals, stockBefore, stockTotal } from "./ledger";
-import { applyToStock, MOVEMENT_EFFECTS, needsCustomer } from "./movement-rules";
-import { amountOf, dayAccount, PriceList, priceFor, stockValue } from "./pricing";
+import { applyToStock, isCash, MOVEMENT_EFFECTS, needsCustomer } from "./movement-rules";
+import { amountOf, dayAccount, PriceList, priceFor, pricedKinds, stockValue } from "./pricing";
 
 describe("movement rules, as the sheet's notes state them", () => {
   const start = { full: 41, empty: 434 };
@@ -35,9 +35,22 @@ describe("movement rules, as the sheet's notes state them", () => {
     expect(stockTotal(after)).toBe(stockTotal(start));
   });
 
-  it("only the debt kinds need a customer", () => {
+  it("only the debt kinds need a customer, of cylinders or of money", () => {
     const withCustomer = movementKinds.filter(needsCustomer);
-    expect(withCustomer).toEqual(["debt_full", "debt_empty", "return_full", "return_empty"]);
+    expect(withCustomer).toEqual([
+      "debt_full",
+      "debt_empty",
+      "return_full",
+      "return_empty",
+      "cash_debt",
+      "cash_return",
+    ]);
+  });
+
+  it("money lent or paid back moves no cylinder", () => {
+    expect(movementKinds.filter(isCash)).toEqual([...cashKinds]);
+    expect(applyToStock(start, "cash_debt", 1)).toEqual(start);
+    expect(applyToStock(start, "cash_return", 1)).toEqual(start);
   });
 
   it("a debt and its return cancel out, on the stock and on the debt", () => {
@@ -133,7 +146,27 @@ describe("customer balance", () => {
     expect(balance.industrial.empty).toBe(1);
     expect(balance.total).toBe(4);
     expect(balance.money).toBe(340);
+    expect(balance.cash).toBe(0);
     expect(balanceEntries(balance)).toHaveLength(2);
+  });
+
+  it("adds the cash borrowed and not paid back to the money, but not to the cylinders", () => {
+    const balance = foldBalance([
+      { kind: "debt_full", cylinderType: "household", quantity: 2, amount: 200 },
+      { kind: "cash_debt", cylinderType: null, quantity: 2, amount: 50_000 },
+      { kind: "cash_return", cylinderType: null, quantity: 1, amount: 20_000 },
+    ]);
+    expect(balance.cash).toBe(30_000);
+    expect(balance.money).toBe(30_200);
+    expect(balance.total).toBe(2);
+    expect(owedIn(balance, "cash")).toBe(30_000);
+    expect(owedIn(balance, { cylinderType: "household", state: "full" })).toBe(2);
+  });
+
+  it("knows what a return settles: cylinders of its type and state, or money", () => {
+    expect(bucketOf("return_empty", "industrial")).toEqual({ cylinderType: "industrial", state: "empty" });
+    expect(bucketOf("cash_return", null)).toBe("cash");
+    expect(bucketOf("exchange", "household")).toBeNull();
   });
 });
 
@@ -177,6 +210,18 @@ describe("money", () => {
       return_full: 100,
     });
     expect(account).toEqual({ income: 2_300, expense: 1_000, credit: 500, settlement: 100, net: 1_300 });
+  });
+
+  it("counts money lent as a new debt and money paid back as a debt returned", () => {
+    const account = dayAccount({ ...emptyTotals(), cash_debt: 50_000, cash_return: 20_000 });
+    expect(account.credit).toBe(50_000);
+    expect(account.settlement).toBe(20_000);
+    expect(account.income).toBe(0);
+  });
+
+  it("gives money no list price: its amount is typed", () => {
+    expect(pricedKinds).not.toContain("cash_debt");
+    expect(priceFor(prices(100), "household", "cash_debt")).toBeNull();
   });
 
   it("does not count a movement with no price as free money", () => {

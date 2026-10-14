@@ -1,4 +1,4 @@
-import { ClipboardList, NotebookPen, Pencil, Phone, Undo2 } from "lucide-react";
+import { BanknoteArrowDown, ClipboardList, HandCoins, NotebookPen, Pencil, Phone, Undo2 } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -67,7 +67,7 @@ const CustomerPage = async ({ params }: Props) => {
             </div>
           </section>
 
-          <div className="grid grid-cols-2 gap-2 lg:w-96 lg:grid-cols-1">
+          <div className="grid grid-cols-2 gap-2 lg:w-96">
             <Link
               href={`/movements/new?kind=debt_full&customer=${customer.uuid}`}
               className={buttonClasses({ size: "lg" }) + " bg-debts! hover:bg-debts/90!"}
@@ -81,6 +81,20 @@ const CustomerPage = async ({ params }: Props) => {
             >
               <Undo2 size={20} />
               رجّع
+            </Link>
+            <Link
+              href={`/movements/new?kind=cash_debt&customer=${customer.uuid}`}
+              className={buttonClasses({ size: "lg", variant: "secondary" }) + " text-debts!"}
+            >
+              <HandCoins size={20} />
+              أخذ مصاري
+            </Link>
+            <Link
+              href={`/movements/new?kind=cash_return&customer=${customer.uuid}`}
+              className={buttonClasses({ size: "lg", variant: "secondary" }) + " text-returns!"}
+            >
+              <BanknoteArrowDown size={20} />
+              رجّع مصاري
             </Link>
           </div>
         </div>

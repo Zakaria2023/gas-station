@@ -39,12 +39,19 @@ export const MoneySummary = ({ rows, title = "المجموع", periodLabel, acti
     CylinderType,
     Record<MovementKind, number>
   >;
+  const seen = new Set<MovementKind>();
   for (const row of rows) {
     amounts[row.kind] = roundMoney(amounts[row.kind] + row.amount);
-    quantities[row.cylinderType][row.kind] += row.quantity;
+    // Money lent or paid back has no type: only its amount shows.
+    if (row.cylinderType) {
+      quantities[row.cylinderType][row.kind] += row.quantity;
+    }
+    if (row.quantity !== 0) {
+      seen.add(row.kind);
+    }
   }
   const account = dayAccount(amounts);
-  const kinds = movementKinds.filter((kind) => cylinderTypes.some((type) => quantities[type][kind] !== 0));
+  const kinds = movementKinds.filter((kind) => seen.has(kind));
 
   return (
     <SummaryCard

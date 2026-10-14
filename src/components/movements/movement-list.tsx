@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/ui/form-error";
 import { TypeBadge } from "@/components/ui/type-badge";
 import { MOVEMENT_KIND_LABELS } from "@/db/label";
+import { isCash } from "@/lib/movement-rules";
 import type { MovementView } from "@/lib/movement-view";
 import { amountOf } from "@/lib/pricing";
 import { formatCount, formatMoney, formatShortDay } from "@/utils";
@@ -33,6 +34,8 @@ const MovementItem = ({
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [state, remove, isRemoving] = useActionState(() => deleteMovementAction(movement.uuid), {});
+  // Money lent or paid back has no count or type, only its amount.
+  const cash = isCash(movement.kind);
 
   const secondLine =
     show === "date"
@@ -56,13 +59,19 @@ const MovementItem = ({
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <span className="truncate text-[15px] font-bold text-ink">{MOVEMENT_KIND_LABELS[movement.kind]}</span>
-            <TypeBadge cylinderType={movement.cylinderType} />
+            {movement.cylinderType && <TypeBadge cylinderType={movement.cylinderType} />}
           </span>
           <span className="mt-0.5 block truncate text-sm text-muted">{secondLine}</span>
         </span>
         <span className="flex flex-col items-end">
-          <span className="text-2xl leading-tight font-extrabold text-ink tabular">{formatCount(movement.quantity)}</span>
-          {movement.unitPrice !== null && (
+          {cash ? (
+            <span className="text-xl leading-tight font-extrabold text-ink tabular">
+              {formatMoney(movement.unitPrice ?? 0)}
+            </span>
+          ) : (
+            <span className="text-2xl leading-tight font-extrabold text-ink tabular">{formatCount(movement.quantity)}</span>
+          )}
+          {!cash && movement.unitPrice !== null && (
             <span className="text-xs font-semibold text-muted tabular">
               {formatMoney(amountOf(movement.quantity, movement.unitPrice))}
             </span>
@@ -79,7 +88,9 @@ const MovementItem = ({
           <div className="flex flex-col gap-2 rounded-control bg-hover p-3 text-sm">
             <p className="font-semibold text-muted">{kindEffectText(movement.kind)}</p>
             <p className="text-ink tabular">
-              {movement.unitPrice === null
+              {cash
+                ? formatMoney(movement.unitPrice ?? 0)
+                : movement.unitPrice === null
                 ? "انسجّلت بدون سعر"
                 : `${formatCount(movement.quantity)} × ${formatMoney(movement.unitPrice)} = ${formatMoney(
                     amountOf(movement.quantity, movement.unitPrice),

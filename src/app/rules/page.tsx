@@ -26,10 +26,10 @@ const Effect = ({ label, value }: { label: string; value: number }) => (
 const RulesPage = () => {
   return (
     <>
-      <PageHeader title="قواعد الحركات" subtitle="لكل جرة واحدة" backHref="/more" />
+      <PageHeader title="قواعد الحركات" subtitle="لكل جرة واحدة، أو لكل ليرة بديون المصاري" backHref="/more" />
       <div className="flex flex-col gap-2.5 px-4 lg:grid lg:grid-cols-2 lg:gap-4 xl:grid-cols-3">
         {movementKinds.map((kind) => {
-          const { stock, debt } = MOVEMENT_EFFECTS[kind];
+          const { stock, debt, cash } = MOVEMENT_EFFECTS[kind];
           return (
             <section key={kind} className="rounded-card bg-surface p-3 shadow-card">
               <div className="mb-2.5 flex items-center gap-3 px-1 pt-1">
@@ -42,8 +42,8 @@ const RulesPage = () => {
                 <Effect label="مليان بالمحل" value={stock.full} />
                 <Effect label="فاضي بالمحل" value={stock.empty} />
                 <Effect
-                  label={debt ? `دين ${CYLINDER_STATE_LABELS[debt.state]}` : "دين الزبون"}
-                  value={debt ? debt.sign : 0}
+                  label={debt ? `دين ${CYLINDER_STATE_LABELS[debt.state]}` : cash ? "دين مصاري" : "دين الزبون"}
+                  value={debt?.sign ?? cash ?? 0}
                 />
               </div>
             </section>

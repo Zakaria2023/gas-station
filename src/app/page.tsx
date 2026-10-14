@@ -15,7 +15,7 @@ import { CYLINDER_TYPE_LABELS } from "@/db/label";
 import { toMovementViews } from "@/lib/movement-view";
 import { summaryRowsOf, sumAmounts } from "@/lib/ledger";
 import { dayAccount, stockValue } from "@/lib/pricing";
-import { getDayMovements, getDayStock, getPriceList, getTotalOwed } from "@/services";
+import { getDayMovements, getDayStock, getPriceList, getTotalOwed, summarizeCash } from "@/services";
 import { addDays, formatLongDay, isIsoDate, relativeDayName, todayIso } from "@/utils";
 
 type Props = {
@@ -32,11 +32,12 @@ const TodayPage = async ({ searchParams }: Props) => {
   const date = isIsoDate(asked) && asked <= today ? asked : today;
   const saved = first(params.saved);
 
-  const [stock, rows, prices, owed] = await Promise.all([
+  const [stock, rows, prices, owed, cash] = await Promise.all([
     getDayStock(date),
     getDayMovements(date),
     getPriceList(date),
     getTotalOwed(),
+    summarizeCash(date, date),
   ]);
   const movements = toMovementViews(rows);
   // The stock is worth the day's prices: raising a price revalues what is left.
@@ -159,7 +160,7 @@ const TodayPage = async ({ searchParams }: Props) => {
             <MoneySummary
               title="حساب اليوم"
               periodLabel={relativeDayName(date, today)}
-              rows={summaryRowsOf({ household: [stock.household], industrial: [stock.industrial] })}
+              rows={[...summaryRowsOf({ household: [stock.household], industrial: [stock.industrial] }), ...cash]}
               action={
                 <Link href="/prices" className="shrink-0 text-sm font-bold text-primary">
                   الأسعار

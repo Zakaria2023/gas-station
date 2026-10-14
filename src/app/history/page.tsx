@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { cylinderTypes } from "@/db/enum";
 import { summaryRowsOf } from "@/lib/ledger";
-import { getFirstActivityDate, getLedger } from "@/services";
+import { getFirstActivityDate, getLedger, summarizeCash } from "@/services";
 import { addMonths, formatMonth, isIsoMonth, monthEnd, monthOf, monthStart, todayIso } from "@/utils";
 
 export const metadata: Metadata = { title: "سجل الأيام" };
@@ -32,7 +32,11 @@ const HistoryPage = async ({ searchParams }: Props) => {
   const month = isIsoMonth(asked) && asked <= thisMonth ? asked : thisMonth;
   const end = month === thisMonth ? today : monthEnd(month);
 
-  const [ledger, firstDate] = await Promise.all([getLedger(monthStart(month), end), getFirstActivityDate()]);
+  const [ledger, cash, firstDate] = await Promise.all([
+    getLedger(monthStart(month), end),
+    summarizeCash(monthStart(month), end),
+    getFirstActivityDate(),
+  ]);
   const firstMonth = firstDate ? monthOf(firstDate) : thisMonth;
 
   // The two types walk the same dates; a day shows when anything happened in it.
@@ -76,7 +80,7 @@ const HistoryPage = async ({ searchParams }: Props) => {
         </div>
 
         <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5">
-          <MoneySummary rows={summaryRowsOf(ledger)} periodLabel={formatMonth(month)} />
+          <MoneySummary rows={[...summaryRowsOf(ledger), ...cash]} periodLabel={formatMonth(month)} />
           {lastDay && (
             <StockSummary
               title={month === thisMonth ? "المخزون الآن" : "المخزون آخر الشهر"}

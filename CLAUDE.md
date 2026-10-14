@@ -12,7 +12,7 @@ the same app and sees everything. Keep the URL private.
 ## Commands
 
 - `pnpm dev` — http://localhost:3020
-- `pnpm type-check`, `pnpm lint`, `pnpm test` (vitest; rules, ledger, balances and pricing are pure and tested)
+- `pnpm type-check`, `pnpm lint`, `pnpm test` (vitest; rules, ledger, balances, pricing are pure and tested)
 - `pnpm db:push` — apply `db/schema` to the database (no migration files)
 
 ## Stack
@@ -36,15 +36,22 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - **Stock counts** (`stock_counts`) are what was physically there at the START
   of a day. A day opens with the previous day's closing unless counted that
   morning; then the count wins. See `buildLedger` in `src/lib/ledger.ts`.
-- A return can never exceed what the customer owes, and a debt that was
-  partly returned cannot be deleted first — both checked in a transaction
-  with the customer row locked (`src/services/movements.ts`).
+- **Money debts** (`cash_debt` دين مصاري, `cash_return` رجع دين مصاري) are
+  movements too: a customer borrows cash and pays it back. They have no
+  cylinder type (`cylinder_type` is null only for them, enforced by a check),
+  `quantity` is 1 and `unit_price` is the amount. `isCash` tells them apart.
+  The per-type ledger never sees them, so a day's or month's money adds
+  `summarizeCash` to its rows.
+- A return can never exceed what the customer owes (cylinders of that type
+  and state, or `Balance.cash` for money), and a debt that was partly returned
+  cannot be deleted first — both checked in a transaction with the customer
+  row locked (`src/services/movements.ts`).
 
 ## Money — `src/lib/pricing.ts`
 
 - `prices` is a price list with history: a price per cylinder type **per
-  movement kind** (`pricedKinds`: every kind but the debts and their returns),
-  effective from a day. A new price is a new row.
+  movement kind** (`pricedKinds`: every kind but the debts, their returns and
+  money, whose amount is typed), effective from a day. A new price is a new row.
 - A movement stores the `unit_price` it was entered with (prefilled from the
   list, editable). A later price change never rewrites a past sale.
 - The stock on hand is valued at the day's list prices: full at the تبديل
@@ -54,9 +61,10 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - Debts are cylinders **and** money. A debt or return has no list price of its
   own: it is prefilled at the price of the cylinder it moves, full at تبديل,
   empty at بيع فاضي (`priceFor`), so debts and stock are valued alike. Old
-  debt rows in `prices` are ignored.
+  debt rows in `prices` are ignored. A customer's `Balance.money` is the
+  cylinders' worth plus `Balance.cash`, the money borrowed and not paid back.
 - `MONEY_FLOW` groups the day's money: income (sales), expense (refill, empties
-  bought), credit (debts given), settlement (debts returned).
+  bought), credit (debts given, cylinders or money), settlement (debts returned).
 
 ## Dates
 
