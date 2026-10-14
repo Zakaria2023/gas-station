@@ -139,7 +139,7 @@ describe("customer balance", () => {
 
 describe("money", () => {
   const prices = (gas: number): PriceList => ({
-    household: { exchange: gas, sell_empty: 30, debt_full: gas },
+    household: { exchange: gas, sell_empty: 30, debt_full: 999 },
     industrial: {},
   });
 
@@ -159,8 +159,11 @@ describe("money", () => {
     expect(sale).toBe(20_000);
   });
 
-  it("prices a return like the debt it settles when it has no price of its own", () => {
+  it("prices a debt and its return like the cylinder they move, ignoring any old debt price", () => {
+    expect(priceFor(prices(100), "household", "debt_full")).toBe(100);
     expect(priceFor(prices(100), "household", "return_full")).toBe(100);
+    expect(priceFor(prices(100), "household", "debt_empty")).toBe(30);
+    expect(priceFor(prices(100), "household", "return_empty")).toBe(30);
     expect(priceFor(prices(100), "household", "refill")).toBeNull();
   });
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { movementKinds } from "@/db/enum";
+import { PricedKind, pricedKinds } from "@/lib/pricing";
 import { isIsoDate } from "@/utils/dates";
 
 // Text, so an empty field means "no price" rather than a price of 0.
@@ -9,10 +9,7 @@ const price = z
   .regex(/^$|^\d{1,12}(\.\d{1,2})?$/, "أرقام فقط، مثل 100 أو 12.5");
 
 const pricesOfType = z.object(
-  Object.fromEntries(movementKinds.map((kind) => [kind, price])) as Record<
-    (typeof movementKinds)[number],
-    typeof price
-  >,
+  Object.fromEntries(pricedKinds.map((kind) => [kind, price])) as Record<PricedKind, typeof price>,
 );
 
 export const pricesFormSchema = z.object({

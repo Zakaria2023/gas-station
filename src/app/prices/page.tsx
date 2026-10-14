@@ -4,8 +4,9 @@ import { PricesForm } from "@/components/prices/prices-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { Toast } from "@/components/ui/toast";
 import { TypeBadge } from "@/components/ui/type-badge";
-import { cylinderTypes, movementKinds } from "@/db/enum";
+import { cylinderTypes } from "@/db/enum";
 import { MOVEMENT_KIND_LABELS } from "@/db/label";
+import { pricedKinds } from "@/lib/pricing";
 import { getPriceChanges, getPriceList } from "@/services";
 import { formatMoney, formatShortDay, isIsoDate, priceInputValue, todayIso } from "@/utils";
 import { PricesFormValues } from "@/validators/prices";
@@ -29,7 +30,7 @@ const PricesPage = async ({ searchParams }: Props) => {
   const values = Object.fromEntries(
     cylinderTypes.map((type) => [
       type,
-      Object.fromEntries(movementKinds.map((kind) => [kind, priceInputValue(list[type][kind])])),
+      Object.fromEntries(pricedKinds.map((kind) => [kind, priceInputValue(list[type][kind])])),
     ]),
   ) as Omit<PricesFormValues, "effectiveFrom">;
 

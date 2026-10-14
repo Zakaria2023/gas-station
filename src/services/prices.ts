@@ -1,9 +1,9 @@
 import "server-only";
-import { and, asc, desc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { CylinderType, MovementKind } from "@/db/enum";
 import { Prices } from "@/db/schema";
-import { emptyPriceList, PriceList } from "@/lib/pricing";
+import { emptyPriceList, PriceList, pricedKinds } from "@/lib/pricing";
 import { generateUuid } from "@/utils";
 
 export type PriceEntry = {
@@ -53,7 +53,7 @@ export const savePrices = async (effectiveFrom: string, entries: PriceEntry[]): 
   return changed.length;
 };
 
-/** The latest price changes, newest first, for the history under the price list. */
+/** The latest price changes, newest first, for the history under the price list (old debt prices left out). */
 export const getPriceChanges = (limit = 40): Promise<PriceChange[]> =>
   db
     .select({
@@ -63,6 +63,7 @@ export const getPriceChanges = (limit = 40): Promise<PriceChange[]> =>
       effectiveFrom: Prices.effectiveFrom,
     })
     .from(Prices)
+    .where(inArray(Prices.kind, pricedKinds))
     .orderBy(desc(Prices.effectiveFrom), desc(Prices.createdAt))
     .limit(limit);
 

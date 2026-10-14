@@ -1,17 +1,18 @@
 import { CylinderState, CylinderType, MovementKind, movementKinds } from "@/db/enum";
-import { StockDelta } from "./movement-rules";
+import { MOVEMENT_EFFECTS, StockDelta } from "./movement-rules";
 
 /**
  * Money: the price list, what a movement is worth, and what the stock on hand
  * is worth. Pure, so it is tested without a database.
  *
- * - Every movement kind can have its own price per type (the price list).
+ * - Every movement kind but the debts has its own price per type (the price list).
  * - A movement keeps the price it was entered with; changing the list later
  *   never rewrites a past sale.
  * - The stock on hand is worth today's prices: full cylinders at the تبديل
  *   (gas) price, empty ones at the بيع فاضي price. Raising the gas price
  *   raises the value of the cylinders still in the shop.
- * - A return with no price of its own is priced like the debt it settles.
+ * - A debt or its return has no price of its own: it is worth the cylinder it
+ *   moves, full or empty, at the price that values the stock.
  */
 
 export type PriceList = Record<CylinderType, Partial<Record<MovementKind, number | null>>>;
@@ -33,25 +34,21 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow> = {
   refill: "expense",
 };
 
-const SETTLES: Partial<Record<MovementKind, MovementKind>> = {
-  return_full: "debt_full",
-  return_empty: "debt_empty",
-};
-
-/** Which price values the stock still in the shop. */
+/** Which price values the stock still in the shop, and the debts. */
 export const STOCK_PRICE_KIND: Record<CylinderState, MovementKind> = {
   full: "exchange",
   empty: "sell_empty",
 };
 
+/** The kinds the price list sets; the debts take the stock's prices. */
+export type PricedKind = Exclude<MovementKind, "debt_full" | "debt_empty" | "return_full" | "return_empty">;
+
+export const pricedKinds = movementKinds.filter((kind): kind is PricedKind => !MOVEMENT_EFFECTS[kind].debt);
+
 /** The list's price for one cylinder of a movement, or null when it has none. */
 export const priceFor = (list: PriceList, cylinderType: CylinderType, kind: MovementKind): number | null => {
-  const own = list[cylinderType][kind];
-  if (own !== undefined && own !== null) {
-    return own;
-  }
-  const settled = SETTLES[kind];
-  return settled ? (list[cylinderType][settled] ?? null) : null;
+  const debt = MOVEMENT_EFFECTS[kind].debt;
+  return list[cylinderType][debt ? STOCK_PRICE_KIND[debt.state] : kind] ?? null;
 };
 
 /** A movement's worth: quantity × the price it was entered with. */

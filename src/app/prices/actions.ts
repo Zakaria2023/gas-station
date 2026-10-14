@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cylinderTypes, movementKinds } from "@/db/enum";
+import { cylinderTypes } from "@/db/enum";
+import { pricedKinds } from "@/lib/pricing";
 import { PriceEntry, savePrices } from "@/services";
 import { ActionResult, fail } from "@/utils";
 import { PricesFormValues, pricesFormSchema } from "@/validators/prices";
@@ -16,7 +17,7 @@ export const savePricesAction = async (
     return { error: parsed.error.issues[0]?.message ?? "تحقق من الأسعار" };
   }
   const entries: PriceEntry[] = cylinderTypes.flatMap((cylinderType) =>
-    movementKinds.map((kind) => {
+    pricedKinds.map((kind) => {
       const typed = parsed.data[cylinderType][kind];
       return { cylinderType, kind, price: typed === "" ? null : Number(typed) };
     }),

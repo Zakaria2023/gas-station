@@ -10,9 +10,10 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
 import { TYPE_TEXT } from "@/components/ui/type-badge";
-import { CylinderType, cylinderTypes, MovementKind } from "@/db/enum";
+import { CylinderType, cylinderTypes } from "@/db/enum";
 import { CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
-import { kindsInGroup, movementGroups } from "@/lib/movement-rules";
+import { MOVEMENT_EFFECTS, movementGroups } from "@/lib/movement-rules";
+import { PricedKind, pricedKinds } from "@/lib/pricing";
 import { CURRENCY } from "@/utils/text";
 import { PricesFormValues } from "@/validators/prices";
 
@@ -29,12 +30,15 @@ const TYPE_SELECTED: Record<CylinderType, string> = {
 };
 
 // What each price is used for, beyond pricing its own movement.
-const ROLE_HINTS: Partial<Record<MovementKind, string>> = {
-  exchange: "وبه تنحسب قيمة المليان بالمحل",
-  sell_empty: "وبه تنحسب قيمة الفاضي بالمحل",
-  return_full: "إذا تركته فاضي: نفس سعر دين مليان",
-  return_empty: "إذا تركته فاضي: نفس سعر دين فاضي",
+const ROLE_HINTS: Partial<Record<PricedKind, string>> = {
+  exchange: "وبه تنحسب قيمة المليان بالمحل وديون المليان",
+  sell_empty: "وبه تنحسب قيمة الفاضي بالمحل وديون الفاضي",
 };
+
+// The debts have no prices of their own, so their group has nothing to show.
+const PRICED_GROUPS = movementGroups
+  .map((group) => ({ group, kinds: pricedKinds.filter((kind) => MOVEMENT_EFFECTS[kind].group === group) }))
+  .filter(({ kinds }) => kinds.length > 0);
 
 export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
   const { form, state, isPending, onSubmit, shownType, setShownType } = usePricesForm(defaults);
@@ -72,7 +76,7 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
         </div>
 
         {/* Phone: one type at a time, picked above. Desktop: both types side by side in columns. */}
-        {movementGroups.map((group) => (
+        {PRICED_GROUPS.map(({ group, kinds }) => (
           <section key={group} className="rounded-card bg-surface shadow-card">
             <div className="flex items-center gap-3 px-4 pt-4">
               <h2 className="flex-1 text-sm font-extrabold text-muted">{GROUP_LABELS[group]}</h2>
@@ -83,7 +87,7 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
               ))}
             </div>
             <ul className="divide-y divide-hairline-soft">
-              {kindsInGroup(group).map((kind) => {
+              {kinds.map((kind) => {
                 const error = errors[shownType]?.[kind]?.message ?? errors.household?.[kind]?.message ?? errors.industrial?.[kind]?.message;
                 return (
                   <li key={kind} className="flex items-center gap-3 px-4 py-3">
