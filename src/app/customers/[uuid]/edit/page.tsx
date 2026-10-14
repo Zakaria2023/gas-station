@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CustomerForm } from "@/components/customers/customer-form";
 import { PageHeader } from "@/components/ui/page-header";
-import { getCustomer } from "@/services";
+import { getCustomer, requireUser } from "@/services";
 
 export const metadata: Metadata = { title: "تعديل زبون" };
 
@@ -11,6 +11,7 @@ type Props = {
 };
 
 const EditCustomerPage = async ({ params }: Props) => {
+  await requireUser();
   const { uuid } = await params;
   const customer = await getCustomer(uuid);
   if (!customer) {

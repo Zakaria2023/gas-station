@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cylinderTypes } from "@/db/enum";
 import { pricedKinds } from "@/lib/pricing";
-import { PriceEntry, savePrices } from "@/services";
+import { PriceEntry, requireUser, savePrices } from "@/services";
 import { ActionResult, fail } from "@/utils";
 import { PricesFormValues, pricesFormSchema } from "@/validators/prices";
 
@@ -12,6 +12,7 @@ export const savePricesAction = async (
   _prevState: ActionResult,
   values: PricesFormValues,
 ): Promise<ActionResult> => {
+  await requireUser();
   const parsed = pricesFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من الأسعار" };

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isCash } from "@/lib/movement-rules";
-import { createMovement, deleteMovement } from "@/services";
+import { createMovement, deleteMovement, requireUser } from "@/services";
 import { ActionResult, fail } from "@/utils";
 import { MovementFormValues, movementFormSchema } from "@/validators/movement";
 
@@ -16,6 +16,7 @@ export const createMovementAction = async (
   _prevState: ActionResult,
   values: MovementFormValues,
 ): Promise<ActionResult> => {
+  await requireUser();
   const parsed = movementFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من البيانات" };
@@ -41,6 +42,7 @@ export const createMovementAction = async (
 };
 
 export const deleteMovementAction = async (uuid: string): Promise<ActionResult> => {
+  await requireUser();
   try {
     await deleteMovement(uuid);
   } catch (error) {

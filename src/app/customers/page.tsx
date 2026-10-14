@@ -10,7 +10,7 @@ import { OwedSummary } from "@/components/customers/owed-summary";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { isSettled } from "@/lib/balances";
-import { getTotalOwed, listCustomers } from "@/services";
+import { getTotalOwed, listCustomers, requireUser } from "@/services";
 import { formatCount } from "@/utils";
 
 export const metadata: Metadata = { title: "الزبائن" };
@@ -22,6 +22,7 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const CustomersPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const search = first(params.q)?.trim() || undefined;
   const owingOnly = first(params.owing) === "1";

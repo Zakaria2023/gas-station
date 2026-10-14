@@ -2,6 +2,7 @@ import { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ReactNode } from "react";
 import { Shell } from "@/components/layout/shell";
+import { getCurrentUser } from "@/services";
 import "./globals.css";
 
 // Self-hosted variable fonts: one file covers every weight, and a build never
@@ -46,16 +47,20 @@ export const viewport: Viewport = {
 // Always render against live data — never a build-time static snapshot.
 export const dynamic = "force-dynamic";
 
-const RootLayout = ({ children }: Props) => (
-  <html
-    lang="ar"
-    dir="rtl"
-    className={`h-full antialiased ${cairoArabic.variable} ${cairoLatin.variable}`}
-  >
-    <body className="min-h-full font-sans text-ink">
-      <Shell>{children}</Shell>
-    </body>
-  </html>
-);
+const RootLayout = async ({ children }: Props) => {
+  // Signed out, the only page is the sign-in screen, and it has no menus.
+  const user = await getCurrentUser();
+  return (
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`h-full antialiased ${cairoArabic.variable} ${cairoLatin.variable}`}
+    >
+      <body className="min-h-full font-sans text-ink">
+        {user ? <Shell user={{ name: user.name, isAdmin: user.role === "admin" }}>{children}</Shell> : children}
+      </body>
+    </html>
+  );
+};
 
 export default RootLayout;

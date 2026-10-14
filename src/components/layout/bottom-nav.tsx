@@ -3,7 +3,7 @@
 import { CalendarDays, Menu, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
+import { ACCOUNT_NAV, ADMIN_NAV, isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
 
 // Right to left: the first tab sits under the right thumb. The tools live
 // behind "المزيد" on a phone; the desktop sidebar lists them directly.
@@ -19,6 +19,8 @@ const isFocusScreen = (pathname: string) =>
   pathname.startsWith("/movements/new") ||
   pathname.startsWith("/counts") ||
   pathname.startsWith("/prices") ||
+  pathname.startsWith("/account") ||
+  pathname.startsWith("/users/") ||
   pathname.endsWith("/new") ||
   pathname.endsWith("/edit");
 
@@ -33,7 +35,8 @@ export const BottomNav = () => {
     const active =
       isActive(pathname, href) ||
       (href === "/history" && isActive(pathname, "/movements")) ||
-      (href === "/more" && TOOLS_NAV.some((tool) => isActive(pathname, tool.href)));
+      (href === "/more" &&
+        [...TOOLS_NAV, ...ADMIN_NAV, ...ACCOUNT_NAV].some((tool) => isActive(pathname, tool.href)));
     return (
       <Link
         key={href}

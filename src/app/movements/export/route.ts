@@ -1,7 +1,7 @@
 import { CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
 import { parseMovementFilters } from "@/lib/movement-filters";
 import { amountOf } from "@/lib/pricing";
-import { streamMovements } from "@/services";
+import { requireUser, streamMovements } from "@/services";
 import { appTimeZone, formatTime, todayIso } from "@/utils";
 
 const HEADERS = ["التاريخ", "الحركة", "الصنف", "الزبون", "العدد", "سعر الواحدة", "المبلغ", "ملاحظة", "وقت التسجيل"];
@@ -20,7 +20,8 @@ const cell = (value: string | number | null): string => {
  * The filtered log as a CSV that Excel opens in Arabic (UTF-8 with a BOM).
  * Streamed batch by batch, so years of movements never sit in memory at once.
  */
-export const GET = (request: Request) => {
+export const GET = async (request: Request) => {
+  await requireUser();
   const filters = parseMovementFilters(Object.fromEntries(new URL(request.url).searchParams));
   const timeZone = appTimeZone();
   const encoder = new TextEncoder();

@@ -6,14 +6,15 @@ Used mostly on phones by 3–4 people of one shop, so every screen is designed
 mobile-first. **Everything the user sees is Arabic, right to left, in the Cairo
 font** (self-hosted in `src/fonts`). Money is Syrian pounds (ل.س).
 
-There is **no sign-in and no users**, on purpose: everyone in the shop opens
-the same app and sees everything. Keep the URL private.
+Everyone **signs in** with a username and password (see Users and sessions);
+once in, every user sees everything. Admins also manage the users.
 
 ## Commands
 
 - `pnpm dev` — http://localhost:3020
-- `pnpm type-check`, `pnpm lint`, `pnpm test` (vitest; rules, ledger, balances, pricing are pure and tested)
+- `pnpm type-check`, `pnpm lint`, `pnpm test` (vitest; rules, ledger, balances, pricing and passwords are pure and tested)
 - `pnpm db:push` — apply `db/schema` to the database (no migration files)
+- `pnpm db:seed-admin` — add the first account, `admin` / `admin`, which must change its password at first sign-in
 
 ## Stack
 
@@ -65,6 +66,25 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
   cylinders' worth plus `Balance.cash`, the money borrowed and not paid back.
 - `MONEY_FLOW` groups the day's money: income (sales), expense (refill, empties
   bought), credit (debts given, cylinders or money), settlement (debts returned).
+
+## Users and sessions
+
+- `users` (role `admin` or `staff`, username stored lower-case) and `sessions`
+  (`db/schema/users.ts`). Passwords are scrypt hashes (`src/lib/password.ts`);
+  the cookie `gas_session` holds a random token and only its SHA-256 is stored.
+- A session lasts 30 days from last use: `userForToken` pushes it back at most
+  once a day, and `src/proxy.ts` refreshes the cookie. The proxy only sends a
+  browser with no cookie to `/login` — it never reads the database.
+- **Every page, Server Action and route calls `requireUser()`** (or
+  `requireAdmin()` for `/users`) from `src/services/auth.ts`; `getCurrentUser`
+  is cached per request. Add the call to anything new. A user with
+  `must_change_password` (a new user, or after an admin reset) is sent to
+  `/account/password` by `requireUser` until they pick their own.
+- Five wrong passwords lock an account for five minutes. Users are disabled,
+  never deleted; disabling or resetting a password signs them out everywhere.
+  The last active admin cannot be demoted or disabled.
+- The root layout shows the shell (menus) only when someone is signed in, so
+  `/login` is bare; sign-in and sign-out revalidate the layout.
 
 ## Dates
 

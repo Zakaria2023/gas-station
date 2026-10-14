@@ -5,3 +5,4 @@ export * from "./stock";
 export * from "./prices";
 export * from "./movement-log";
 export * from "./users";
+export * from "./auth";

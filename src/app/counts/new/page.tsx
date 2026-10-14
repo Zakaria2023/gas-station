@@ -3,7 +3,7 @@ import { CountForm } from "@/components/counts/count-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { CylinderType, cylinderTypes } from "@/db/enum";
 import { StockDelta } from "@/lib/movement-rules";
-import { getCountsForDay, getDayStock } from "@/services";
+import { getCountsForDay, getDayStock, requireUser } from "@/services";
 import { formatLongDay, isIsoDate, relativeDayName, todayIso } from "@/utils";
 
 export const metadata: Metadata = { title: "جرد أول اليوم" };
@@ -13,6 +13,7 @@ type Props = {
 };
 
 const NewCountPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const asked = Array.isArray(params.date) ? params.date[0] : params.date;
   const today = todayIso();

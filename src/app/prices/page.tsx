@@ -7,7 +7,7 @@ import { TypeBadge } from "@/components/ui/type-badge";
 import { cylinderTypes } from "@/db/enum";
 import { MOVEMENT_KIND_LABELS } from "@/db/label";
 import { pricedKinds } from "@/lib/pricing";
-import { getPriceChanges, getPriceList } from "@/services";
+import { getPriceChanges, getPriceList, requireUser } from "@/services";
 import { formatMoney, formatShortDay, isIsoDate, priceInputValue, todayIso } from "@/utils";
 import { PricesFormValues } from "@/validators/prices";
 
@@ -20,6 +20,7 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const PricesPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.from);

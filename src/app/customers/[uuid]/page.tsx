@@ -10,7 +10,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { toMovementViews } from "@/lib/movement-view";
-import { getCustomer, getCustomerMovements } from "@/services";
+import { getCustomer, getCustomerMovements, requireUser } from "@/services";
 
 export const metadata: Metadata = { title: "زبون" };
 
@@ -19,6 +19,7 @@ type Props = {
 };
 
 const CustomerPage = async ({ params }: Props) => {
+  await requireUser();
   const { uuid } = await params;
   const customer = await getCustomer(uuid);
   if (!customer) {

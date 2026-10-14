@@ -1,4 +1,15 @@
-import { BookOpen, CalendarDays, ClipboardCheck, House, List, Tags, Users, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  ClipboardCheck,
+  House,
+  KeyRound,
+  List,
+  Tags,
+  UserCog,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 /** The app's sections: the phone's tab bar shows the first few, the desktop sidebar all of them. */
 
@@ -20,6 +31,11 @@ export const TOOLS_NAV: NavItem[] = [
   { href: "/counts/new", label: "جرد أول اليوم", icon: ClipboardCheck },
   { href: "/rules", label: "قواعد الحركات", icon: BookOpen },
 ];
+
+/** Shown to admins only. */
+export const ADMIN_NAV: NavItem[] = [{ href: "/users", label: "المستخدمين", icon: UserCog }];
+
+export const ACCOUNT_NAV: NavItem[] = [{ href: "/account/password", label: "تغيير كلمة السر", icon: KeyRound }];
 
 export const isActive = (pathname: string, href: string) => {
   if (href === "/") {

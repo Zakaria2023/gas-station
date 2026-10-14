@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createCustomer, deleteCustomer, updateCustomer } from "@/services";
+import { createCustomer, deleteCustomer, requireUser, updateCustomer } from "@/services";
 import { ActionResult, cleanName, fail } from "@/utils";
 import { CustomerFormValues, customerFormSchema } from "@/validators/customer";
 
@@ -20,6 +20,7 @@ export const createCustomerAction = async (
   _prevState: ActionResult,
   values: CustomerFormValues,
 ): Promise<ActionResult> => {
+  await requireUser();
   const parsed = customerFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من البيانات" };
@@ -36,6 +37,7 @@ export const createCustomerAction = async (
 
 /** Add a customer by name from inside the movement form, without leaving it. */
 export const quickCreateCustomerAction = async (name: string): Promise<QuickCustomerResult> => {
+  await requireUser();
   const parsed = customerFormSchema.safeParse({ name, phone: "", notes: "" });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من الاسم" };
@@ -55,6 +57,7 @@ export const updateCustomerAction = async (
   _prevState: ActionResult,
   values: CustomerFormValues,
 ): Promise<ActionResult> => {
+  await requireUser();
   const parsed = customerFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من البيانات" };
@@ -69,6 +72,7 @@ export const updateCustomerAction = async (
 };
 
 export const deleteCustomerAction = async (uuid: string): Promise<ActionResult> => {
+  await requireUser();
   try {
     await deleteCustomer(uuid);
   } catch (error) {

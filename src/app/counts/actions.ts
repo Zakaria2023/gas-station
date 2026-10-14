@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cylinderTypes, CylinderType } from "@/db/enum";
-import { deleteCount, saveCount } from "@/services";
+import { deleteCount, requireUser, saveCount } from "@/services";
 import { ActionResult, fail, isIsoDate } from "@/utils";
 import { CountFormValues, countFormSchema } from "@/validators/count";
 
@@ -11,6 +11,7 @@ export const saveCountAction = async (
   _prevState: ActionResult,
   values: CountFormValues,
 ): Promise<ActionResult> => {
+  await requireUser();
   const parsed = countFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من الأرقام" };
@@ -42,6 +43,7 @@ export const deleteCountAction = async (
   cylinderType: CylinderType,
   date: string,
 ): Promise<ActionResult> => {
+  await requireUser();
   if (!isIsoDate(date)) {
     return { error: "التاريخ غير صحيح" };
   }

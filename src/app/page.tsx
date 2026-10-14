@@ -15,7 +15,7 @@ import { CYLINDER_TYPE_LABELS } from "@/db/label";
 import { toMovementViews } from "@/lib/movement-view";
 import { summaryRowsOf, sumAmounts } from "@/lib/ledger";
 import { dayAccount, stockValue } from "@/lib/pricing";
-import { getDayMovements, getDayStock, getPriceList, getTotalOwed, summarizeCash } from "@/services";
+import { getDayMovements, getDayStock, getPriceList, getTotalOwed, requireUser, summarizeCash } from "@/services";
 import { addDays, formatLongDay, isIsoDate, relativeDayName, todayIso } from "@/utils";
 
 type Props = {
@@ -25,6 +25,7 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const TodayPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.date);
@@ -183,6 +184,7 @@ const TodayPage = async ({ searchParams }: Props) => {
       </div>
 
       {saved && <Toast key={saved} message="تم حفظ الحركة" />}
+      {first(params.password) === "changed" && <Toast message="تغيّرت كلمة السر" />}
     </>
   );
 };

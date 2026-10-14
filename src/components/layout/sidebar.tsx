@@ -1,10 +1,13 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { LogOut, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOutAction } from "@/app/login/actions";
 import { CylinderIcon } from "@/components/ui/cylinder-icon";
-import { isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
+import { USER_ROLE_LABELS } from "@/db/label";
+import { ACCOUNT_NAV, ADMIN_NAV, isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
+import type { ShellUser } from "./shell";
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
   const active = isActive(pathname, item.href);
@@ -24,7 +27,7 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
 };
 
 /** The desktop's side menu, on the right in a right-to-left page; phones use the tab bar. */
-export const Sidebar = () => {
+export const Sidebar = ({ user }: { user: ShellUser }) => {
   const pathname = usePathname();
 
   return (
@@ -57,7 +60,33 @@ export const Sidebar = () => {
         {TOOLS_NAV.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
+        {user.isAdmin &&
+          ADMIN_NAV.map((item) => <NavLink key={item.href} item={item} pathname={pathname} />)}
       </nav>
+
+      <div className="border-t border-hairline px-3 py-3">
+        <div className="flex items-center gap-3 px-3 pb-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-hairline-soft text-muted">
+            <UserRound size={18} />
+          </span>
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-sm font-bold text-ink">{user.name}</span>
+            <span className="block text-xs text-muted">{USER_ROLE_LABELS[user.isAdmin ? "admin" : "staff"]}</span>
+          </span>
+        </div>
+        {ACCOUNT_NAV.map((item) => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-[15px] font-bold text-muted transition-colors hover:bg-danger-tint hover:text-danger"
+          >
+            <LogOut size={20} />
+            تسجيل الخروج
+          </button>
+        </form>
+      </div>
     </aside>
   );
 };

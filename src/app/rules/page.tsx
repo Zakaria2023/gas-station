@@ -5,6 +5,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { movementKinds } from "@/db/enum";
 import { CYLINDER_STATE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
 import { MOVEMENT_EFFECTS } from "@/lib/movement-rules";
+import { requireUser } from "@/services";
 import { formatSigned } from "@/utils";
 
 export const metadata: Metadata = { title: "قواعد الحركات" };
@@ -23,7 +24,8 @@ const Effect = ({ label, value }: { label: string; value: number }) => (
  * Every movement and what one cylinder of it does, read straight off the
  * rules table — so what this page says is exactly what the app computes.
  */
-const RulesPage = () => {
+const RulesPage = async () => {
+  await requireUser();
   return (
     <>
       <PageHeader title="قواعد الحركات" subtitle="لكل جرة واحدة، أو لكل ليرة بديون المصاري" backHref="/more" />

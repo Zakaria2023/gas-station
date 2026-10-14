@@ -3,7 +3,7 @@ import { MovementForm } from "@/components/movements/movement-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { CylinderType, cylinderTypes, MovementKind, movementKinds } from "@/db/enum";
 import { priceFor } from "@/lib/pricing";
-import { getDayStock, getPriceList, listCustomers } from "@/services";
+import { getDayStock, getPriceList, listCustomers, requireUser } from "@/services";
 import { formatLongDay, isIsoDate, priceInputValue, todayIso } from "@/utils";
 
 export const metadata: Metadata = { title: "حركة جديدة" };
@@ -18,6 +18,7 @@ const oneOf = <T extends string>(value: string | undefined, allowed: readonly T[
   value && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
 
 const NewMovementPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.date);

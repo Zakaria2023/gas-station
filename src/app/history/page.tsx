@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { cylinderTypes } from "@/db/enum";
 import { summaryRowsOf } from "@/lib/ledger";
-import { getFirstActivityDate, getLedger, summarizeCash } from "@/services";
+import { getFirstActivityDate, getLedger, requireUser, summarizeCash } from "@/services";
 import { addMonths, formatMonth, isIsoMonth, monthEnd, monthOf, monthStart, todayIso } from "@/utils";
 
 export const metadata: Metadata = { title: "سجل الأيام" };
@@ -25,6 +25,7 @@ type Props = {
  * stock at its end, then its days.
  */
 const HistoryPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const thisMonth = monthOf(today);

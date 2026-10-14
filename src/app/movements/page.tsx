@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { filtersQuery, hasFilters, MovementFilters, parseMovementFilters } from "@/lib/movement-filters";
 import { MovementView, toMovementViews } from "@/lib/movement-view";
-import { getCustomerName, listMovements, summarizeMovements } from "@/services";
+import { getCustomerName, listMovements, requireUser, summarizeMovements } from "@/services";
 import { formatCount, formatFullDay, formatLongDay, todayIso } from "@/utils";
 
 export const metadata: Metadata = { title: "كل الحركات" };
@@ -54,6 +54,7 @@ const byDay = (movements: MovementView[]): { date: string; movements: MovementVi
  * list are added up in the database for the whole filtered period.
  */
 const MovementsLogPage = async ({ searchParams }: Props) => {
+  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const filters = parseMovementFilters(params);
