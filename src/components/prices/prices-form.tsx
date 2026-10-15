@@ -2,12 +2,13 @@
 
 import { TriangleAlert } from "lucide-react";
 import { ReactNode } from "react";
+import { Controller } from "react-hook-form";
 import { usePricesForm } from "@/app/prices/use-prices-form";
 import { GROUP_LABELS, kindChipClass, KindIcon } from "@/components/movements/kind-style";
 import { ActionBar } from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { CylinderIcon } from "@/components/ui/cylinder-icon";
-import { Field } from "@/components/ui/field";
+import { DateField } from "@/components/ui/date-field";
 import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
 import { TYPE_TEXT } from "@/components/ui/type-badge";
@@ -52,13 +53,20 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
     <form onSubmit={onSubmit} noValidate>
       <div className="flex flex-col gap-4 px-4 pt-1 pb-40 lg:max-w-4xl lg:gap-5">
         <section className="rounded-card bg-surface p-4 shadow-card">
-          <Field
-            label="تسري الأسعار من"
-            error={errors.effectiveFrom?.message}
-            hint="الحركات من هذا اليوم وطالع بتاخد الأسعار الجديدة. الحركات القديمة بتضل على سعرها."
-          >
-            <Input type="date" max={today} {...register("effectiveFrom")} invalid={Boolean(errors.effectiveFrom)} />
-          </Field>
+          <Controller
+            control={form.control}
+            name="effectiveFrom"
+            render={({ field }) => (
+              <DateField
+                label="تسري الأسعار من"
+                value={field.value}
+                max={today}
+                onChange={field.onChange}
+                error={errors.effectiveFrom?.message}
+                hint="الحركات من هذا اليوم وطالع بتاخد الأسعار الجديدة. الحركات القديمة بتضل على سعرها."
+              />
+            )}
+          />
         </section>
 
         <div className="lg:hidden">

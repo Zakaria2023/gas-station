@@ -157,3 +157,15 @@ body {
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
+
+/* DateOverlay: the invisible date input's calendar button covers the whole
+   box, so a click anywhere on it opens the calendar on desktop Chrome too. */
+.date-overlay::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}

@@ -8,6 +8,7 @@ import { useMovementForm } from "@/app/movements/use-movement-form";
 import { ActionBar } from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { CylinderIcon } from "@/components/ui/cylinder-icon";
+import { DateField } from "@/components/ui/date-field";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
@@ -255,9 +256,19 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
               <ChevronDown size={18} className="text-faint transition-transform group-open:rotate-180" />
             </summary>
             <div className="flex flex-col gap-4 px-4 pb-4">
-              <Field label="التاريخ" error={errors.businessDate?.message}>
-                <Input type="date" max={today} {...register("businessDate")} invalid={Boolean(errors.businessDate)} />
-              </Field>
+              <Controller
+                control={control}
+                name="businessDate"
+                render={({ field }) => (
+                  <DateField
+                    label="التاريخ"
+                    value={field.value}
+                    max={today}
+                    onChange={field.onChange}
+                    error={errors.businessDate?.message}
+                  />
+                )}
+              />
               <Field label="ملاحظة" error={errors.note?.message}>
                 <Textarea rows={2} {...register("note")} placeholder="اختياري" />
               </Field>

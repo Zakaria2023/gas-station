@@ -127,6 +127,8 @@ by both the app's pool and drizzle-kit.
   with cards on a phone. Every table column is right-aligned (`text-start`).
 - Choices are tapped, not typed: filters open a `BottomSheet` (a dialog on
   desktop); dates show via `DateField`, never the browser's "mm/dd/yyyy".
+  Any date picker is a `DateOverlay`: the real date input, invisible, over the
+  button — phones ignore `showPicker()` called from another element.
 - Format numbers only with `formatCount` / `formatMoney` / `formatSigned`:
   they wrap signed numbers in a left-to-right isolate so "−15" does not turn
   into "15-" in right-to-left text.
