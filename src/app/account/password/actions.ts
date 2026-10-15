@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { changeOwnPassword, requireSignedIn, sessionToken } from "@/services";
+import { changeOwnPassword, requireUser, sessionToken } from "@/services";
 import { ActionResult, fail } from "@/utils";
 import { PasswordFormValues, passwordFormSchema } from "@/validators/user";
 
@@ -11,7 +11,7 @@ export const changePasswordAction = async (
   values: PasswordFormValues,
 ): Promise<ActionResult> => {
   // Not requireUser: someone made to change their password has to get here.
-  const user = await requireSignedIn();
+  const user = await requireUser();
   const parsed = passwordFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "تحقق من البيانات" };

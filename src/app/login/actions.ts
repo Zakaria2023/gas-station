@@ -20,7 +20,7 @@ export const signInAction = async (_prevState: ActionResult, values: LoginFormVa
   }
   // The layout swaps the bare sign-in screen for the app's menus.
   revalidatePath("/", "layout");
-  redirect(user.mustChangePassword ? "/account/password" : "/");
+  redirect("/");
 };
 
 export const signOutAction = async (): Promise<void> => {

@@ -30,20 +30,14 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return token ? userForToken(token) : null;
 });
 
-/** For a page or action that needs only a session, even one that must still change its password. */
-export const requireSignedIn = async (): Promise<CurrentUser> => {
+/**
+ * For every page and action of the app: signed in. A user still on a password
+ * someone else set is not blocked; the shell reminds them to change it.
+ */
+export const requireUser = async (): Promise<CurrentUser> => {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
-  }
-  return user;
-};
-
-/** For every page and action of the app: signed in, with a password of their own. */
-export const requireUser = async (): Promise<CurrentUser> => {
-  const user = await requireSignedIn();
-  if (user.mustChangePassword) {
-    redirect("/account/password");
   }
   return user;
 };

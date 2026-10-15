@@ -57,7 +57,7 @@ const RootLayout = async ({ children }: Props) => {
       className={`h-full antialiased ${cairoArabic.variable} ${cairoLatin.variable}`}
     >
       <body className="min-h-full font-sans text-ink">
-        {user ? <Shell user={{ name: user.name, isAdmin: user.role === "admin" }}>{children}</Shell> : children}
+        {user ? <Shell user={{ name: user.name, isAdmin: user.role === "admin", mustChangePassword: user.mustChangePassword }}>{children}</Shell> : children}
       </body>
     </html>
   );

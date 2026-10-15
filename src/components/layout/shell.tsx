@@ -1,11 +1,14 @@
 import { ReactNode } from "react";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { PasswordReminder } from "@/components/layout/password-reminder";
 import { Sidebar } from "@/components/layout/sidebar";
 
 /** Who is signed in, as much as the menus need. */
 export type ShellUser = {
   name: string;
   isAdmin: boolean;
+  /** Still on a password someone else set: a reminder shows above every page. */
+  mustChangePassword: boolean;
 };
 
 type ShellProps = {
@@ -22,7 +25,10 @@ export const Shell = ({ user, children }: ShellProps) => (
   <>
     <Sidebar user={user} />
     <main className="min-h-dvh lg:ps-64">
-      <div className="mx-auto w-full max-w-xl lg:max-w-7xl lg:px-6 lg:pb-10">{children}</div>
+      <div className="mx-auto w-full max-w-xl lg:max-w-7xl lg:px-6 lg:pb-10">
+        {user.mustChangePassword && <PasswordReminder />}
+        {children}
+      </div>
     </main>
     <BottomNav />
   </>

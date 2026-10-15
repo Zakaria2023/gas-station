@@ -14,7 +14,7 @@ once in, every user sees everything. Admins also manage the users.
 - `pnpm dev` — http://localhost:3020
 - `pnpm type-check`, `pnpm lint`, `pnpm test` (vitest; rules, ledger, balances, pricing and passwords are pure and tested)
 - `pnpm db:push` — apply `db/schema` to the database (no migration files)
-- `pnpm db:seed-admin` — add the first account, `admin` / `admin`, which must change its password at first sign-in
+- `pnpm db:seed-admin` — add the first account, `admin` / `admin`; the app reminds it to change that password
 
 ## Stack
 
@@ -89,8 +89,9 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - **Every page, Server Action and route calls `requireUser()`** (or
   `requireAdmin()` for `/users`) from `src/services/auth.ts`; `getCurrentUser`
   is cached per request. Add the call to anything new. A user with
-  `must_change_password` (a new user, or after an admin reset) is sent to
-  `/account/password` by `requireUser` until they pick their own.
+  `must_change_password` (a new user, or after an admin reset) is never
+  blocked — the owner asked for that — the shell shows `PasswordReminder`
+  above every page until they pick their own.
 - Five wrong passwords lock an account for five minutes. Users are disabled,
   never deleted; disabling or resetting a password signs them out everywhere.
   The last active admin cannot be demoted or disabled.
