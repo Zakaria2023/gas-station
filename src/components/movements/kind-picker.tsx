@@ -11,10 +11,11 @@ type KindPickerProps = {
 };
 
 /** Every kind of movement as a big tile, by family. Adding stock has its own page (/add), so it is not here. */
+const shown = (kind: MovementKind) => kind !== "stock_in";
 export const KindPicker = ({ value, onChange }: KindPickerProps) => (
   <div className="flex flex-col gap-3.5" role="radiogroup" aria-label="نوع الحركة">
-    {movementGroups.filter((group) => group !== "stock").map((group) => {
-      const kinds = kindsInGroup(group);
+    {movementGroups.map((group) => {
+      const kinds = kindsInGroup(group).filter(shown);
       return (
         <div key={group}>
           <p className="mb-1.5 px-1 text-xs font-bold text-faint">{GROUP_LABELS[group]}</p>

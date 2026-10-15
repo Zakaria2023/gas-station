@@ -15,7 +15,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { Textarea } from "@/components/ui/textarea";
 import { CylinderState, CylinderType, cylinderTypes } from "@/db/enum";
 import { CYLINDER_STATE_LABELS, CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
-import { StockDelta } from "@/lib/movement-rules";
+import { movesMoney, StockDelta } from "@/lib/movement-rules";
 import { PriceList } from "@/lib/pricing";
 import { CURRENCY, formatCount, formatMoney, priceInputValue } from "@/utils/text";
 import { MAX_QUANTITY, MovementFormValues } from "@/validators/movement";
@@ -183,55 +183,57 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
             </Section>
           )}
 
-          <Section title={cash ? "المبلغ" : "سعر الواحدة"}>
-            <div className="relative">
-              <Input
-                {...register("unitPrice")}
-                inputMode="decimal"
-                placeholder={cash ? "0" : "بدون سعر"}
-                invalid={Boolean(errors.unitPrice) || (cash && overOwed)}
-                className="min-h-14 pe-14 text-2xl font-extrabold tabular"
-              />
-              <span className="pointer-events-none absolute inset-y-0 end-4 flex items-center text-base font-bold text-muted">
-                {CURRENCY}
-              </span>
-            </div>
-            {errors.unitPrice && <p className="px-1 text-sm text-danger">{errors.unitPrice.message}</p>}
-            {cash ? (
-              movement.owed !== null && (
-                <p className={`px-1 text-sm font-semibold ${overOwed ? "text-danger" : "text-muted"}`}>
-                  {movement.owed > 0
-                    ? `عليه ${formatMoney(movement.owed)} مصاري${overOwed ? " فقط" : ""}`
-                    : "هذا الزبون ما عليه مصاري"}
-                </p>
-              )
-            ) : movement.listPrice === null ? (
-              <p className="px-1 text-sm text-muted">
-                ما في سعر لهذه الحركة بلائحة الأسعار.{" "}
-                <Link href="/prices" className="font-bold text-primary">
-                  حدّد الأسعار
-                </Link>
-              </p>
-            ) : movement.unitPrice !== movement.listPrice ? (
-              <button
-                type="button"
-                onClick={() => setValue("unitPrice", priceInputValue(movement.listPrice), { shouldValidate: true })}
-                className="self-start px-1 text-sm font-semibold text-primary"
-              >
-                سعر اللائحة {formatMoney(movement.listPrice)} · رجّعه
-              </button>
-            ) : (
-              <p className="px-1 text-sm text-muted">من لائحة الأسعار، وبتقدر تغيّره لهذه الحركة بس.</p>
-            )}
-            {!cash && movement.unitPrice !== null && movement.quantity > 0 && (
-              <div className="flex items-center justify-between rounded-control bg-primary-tint px-4 py-3">
-                <span className="text-sm font-semibold text-primary tabular">
-                  {formatCount(movement.quantity)} × {formatMoney(movement.unitPrice)}
+          {movesMoney(movement.kind) && (
+            <Section title={cash ? "المبلغ" : "سعر الواحدة"}>
+              <div className="relative">
+                <Input
+                  {...register("unitPrice")}
+                  inputMode="decimal"
+                  placeholder={cash ? "0" : "بدون سعر"}
+                  invalid={Boolean(errors.unitPrice) || (cash && overOwed)}
+                  className="min-h-14 pe-14 text-2xl font-extrabold tabular"
+                />
+                <span className="pointer-events-none absolute inset-y-0 end-4 flex items-center text-base font-bold text-muted">
+                  {CURRENCY}
                 </span>
-                <span className="text-xl font-extrabold text-primary tabular">{formatMoney(movement.total)}</span>
               </div>
-            )}
-          </Section>
+              {errors.unitPrice && <p className="px-1 text-sm text-danger">{errors.unitPrice.message}</p>}
+              {cash ? (
+                movement.owed !== null && (
+                  <p className={`px-1 text-sm font-semibold ${overOwed ? "text-danger" : "text-muted"}`}>
+                    {movement.owed > 0
+                      ? `عليه ${formatMoney(movement.owed)} مصاري${overOwed ? " فقط" : ""}`
+                      : "هذا الزبون ما عليه مصاري"}
+                  </p>
+                )
+              ) : movement.listPrice === null ? (
+                <p className="px-1 text-sm text-muted">
+                  ما في سعر لهذه الحركة بلائحة الأسعار.{" "}
+                  <Link href="/prices" className="font-bold text-primary">
+                    حدّد الأسعار
+                  </Link>
+                </p>
+              ) : movement.unitPrice !== movement.listPrice ? (
+                <button
+                  type="button"
+                  onClick={() => setValue("unitPrice", priceInputValue(movement.listPrice), { shouldValidate: true })}
+                  className="self-start px-1 text-sm font-semibold text-primary"
+                >
+                  سعر اللائحة {formatMoney(movement.listPrice)} · رجّعه
+                </button>
+              ) : (
+                <p className="px-1 text-sm text-muted">من لائحة الأسعار، وبتقدر تغيّره لهذه الحركة بس.</p>
+              )}
+              {!cash && movement.unitPrice !== null && movement.quantity > 0 && (
+                <div className="flex items-center justify-between rounded-control bg-primary-tint px-4 py-3">
+                  <span className="text-sm font-semibold text-primary tabular">
+                    {formatCount(movement.quantity)} × {formatMoney(movement.unitPrice)}
+                  </span>
+                  <span className="text-xl font-extrabold text-primary tabular">{formatMoney(movement.total)}</span>
+                </div>
+              )}
+            </Section>
+          )}
 
           {movement.showPreview && (
             <section className="rounded-card bg-surface p-4 shadow-card">

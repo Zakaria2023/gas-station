@@ -39,8 +39,11 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - **What each movement does to stock and debt lives in one table**:
   `MOVEMENT_EFFECTS` in `src/lib/movement-rules.ts`. The sheet only documented
   تبديل, بيع مليان and بيع فاضي; the debt kinds, their returns and إضافة are
-  the app's reading. The sheet's فاضي دخل زبون and the app's old تعبئة were
-  dropped on the owner's request.
+  the app's reading. The app's old تعبئة was dropped on the owner's request.
+- Three kinds only move stock, with no price, money or customer balance
+  (`movesMoney` is false, the form hides the price): فاضي دخل لزبون (a
+  customer leaves an empty, +empty), رجع للزبون مليان / فاضي (one is handed
+  back, −full or −empty). They are entered on `/movements/new`.
 - **Stock counts** (`stock_counts`) are what was physically there at the START
   of a day. A day opens with the previous day's closing unless counted that
   morning; then the count wins. See `buildLedger` in `src/lib/ledger.ts`.

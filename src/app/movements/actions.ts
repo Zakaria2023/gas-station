@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isCash } from "@/lib/movement-rules";
+import { isCash, movesMoney } from "@/lib/movement-rules";
 import { createMovement, deleteMovement, requireUser } from "@/services";
 import { ActionResult, fail } from "@/utils";
 import { MovementFormValues, movementFormSchema } from "@/validators/movement";
@@ -30,7 +30,8 @@ export const createMovementAction = async (
       ...fields,
       cylinderType: cash ? null : fields.cylinderType,
       quantity: cash ? 1 : fields.quantity,
-      unitPrice: unitPrice === "" ? null : Number(unitPrice),
+      // A customer's empty in, or a cylinder handed back, only moves stock.
+      unitPrice: unitPrice === "" || !movesMoney(fields.kind) ? null : Number(unitPrice),
       customerUuid: customerUuid || null,
       note: note || null,
     });

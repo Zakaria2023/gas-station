@@ -4,7 +4,7 @@ import { addDays, addMonths, isIsoDate, monthEnd, todayIso } from "@/utils/dates
 import { foldArabic, formatCount, formatMoney, formatSigned } from "@/utils/text";
 import { balanceEntries, bucketOf, foldBalance, owedIn } from "./balances";
 import { buildLedger, emptyTotals, stockBefore, stockTotal } from "./ledger";
-import { applyToStock, isCash, MOVEMENT_EFFECTS, needsCustomer } from "./movement-rules";
+import { applyToStock, isCash, MOVEMENT_EFFECTS, movesMoney, needsCustomer } from "./movement-rules";
 import { amountOf, dayAccount, PriceList, priceFor, pricedKinds, stockValue } from "./pricing";
 
 describe("movement rules, as the sheet's notes state them", () => {
@@ -27,6 +27,22 @@ describe("movement rules, as the sheet's notes state them", () => {
 
   it("adding stock raises only the full", () => {
     expect(applyToStock(start, "stock_in", 400)).toEqual({ full: 441, empty: 434 });
+  });
+
+  it("a customer's empty left at the shop raises the empty; handing one back lowers that state", () => {
+    expect(applyToStock(start, "customer_empty_in", 2)).toEqual({ full: 41, empty: 436 });
+    expect(applyToStock(start, "customer_full_out", 2)).toEqual({ full: 39, empty: 434 });
+    expect(applyToStock(start, "customer_empty_out", 2)).toEqual({ full: 41, empty: 432 });
+  });
+
+  it("gives the customer's cylinders and إضافة no price and no money", () => {
+    for (const kind of ["stock_in", "customer_empty_in", "customer_full_out", "customer_empty_out"] as const) {
+      expect(movesMoney(kind)).toBe(false);
+      expect(pricedKinds).not.toContain(kind);
+      expect(MOVEMENT_EFFECTS[kind].debt).toBeNull();
+    }
+    const account = dayAccount({ ...emptyTotals(), customer_empty_in: 500, customer_full_out: 500 });
+    expect(account).toEqual({ income: 0, credit: 0, settlement: 0 });
   });
 
   it("follows the owner's day: 400 added, 200 sold, 200 left", () => {

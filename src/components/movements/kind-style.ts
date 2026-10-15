@@ -1,5 +1,7 @@
 import {
+  ArrowDownToLine,
   ArrowLeftRight,
+  ArrowUpFromLine,
   BanknoteArrowDown,
   HandCoins,
   NotebookPen,
@@ -28,6 +30,9 @@ const KIND_ICONS: Record<MovementKind, LucideIcon> = {
   stock_in: PackagePlus,
   cash_debt: HandCoins,
   cash_return: BanknoteArrowDown,
+  customer_empty_in: ArrowDownToLine,
+  customer_full_out: ArrowUpFromLine,
+  customer_empty_out: ArrowUpFromLine,
 };
 
 const toneOf = (kind: MovementKind): Tone => {

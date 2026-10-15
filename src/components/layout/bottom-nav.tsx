@@ -23,7 +23,7 @@ const NEW_ACTIONS: { href: string; label: string; hint: string; icon: LucideIcon
   {
     href: "/movements/new",
     label: "حركة جديدة",
-    hint: "دين، رجع دين، دين مصاري، أو بيع واحد",
+    hint: "دين، دين مصاري، فاضي لزبون، أو بيع واحد",
     icon: Plus,
     chip: "bg-primary-tint text-primary",
   },

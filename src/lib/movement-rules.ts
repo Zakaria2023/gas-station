@@ -17,6 +17,9 @@ import { CylinderState, MovementKind, movementKinds } from "@/db/enum";
  * - رجع دين مليان / رجع دين فاضي: the customer brings that cylinder back;
  *   the stock gets it back and the debt goes down.
  * - إضافة: full cylinders arrive (the truck); only the full goes up.
+ * - فاضي دخل لزبون: a customer leaves an empty; the empty goes up.
+ * - رجع للزبون مليان / فاضي: a cylinder is handed back to a customer, full
+ *   or empty; that state goes down. None of these three has a price.
  * - دين مصاري / رجع دين مصاري: not in the sheet either; the customer borrows
  *   money from the shop and pays it back. No cylinder moves.
  */
@@ -52,7 +55,13 @@ export const MOVEMENT_EFFECTS: Record<MovementKind, MovementEffect> = {
   cash_debt: { stock: { full: 0, empty: 0 }, debt: null, cash: 1, group: "cash" },
   cash_return: { stock: { full: 0, empty: 0 }, debt: null, cash: -1, group: "cash" },
   stock_in: { stock: { full: 1, empty: 0 }, debt: null, cash: null, group: "stock" },
+  customer_empty_in: { stock: { full: 0, empty: 1 }, debt: null, cash: null, group: "stock" },
+  customer_full_out: { stock: { full: -1, empty: 0 }, debt: null, cash: null, group: "stock" },
+  customer_empty_out: { stock: { full: 0, empty: -1 }, debt: null, cash: null, group: "stock" },
 };
+
+/** Sales, debts and money have an amount; the stock group (إضافة, a customer's cylinders) only moves stock. */
+export const movesMoney = (kind: MovementKind): boolean => MOVEMENT_EFFECTS[kind].group !== "stock";
 
 /** Money lent or paid back: no cylinder type, and the amount is typed instead of a count and a price. */
 export const isCash = (kind: MovementKind): boolean => MOVEMENT_EFFECTS[kind].cash !== null;

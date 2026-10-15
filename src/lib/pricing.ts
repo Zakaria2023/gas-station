@@ -32,6 +32,9 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow | null> = {
   return_full: "settlement",
   return_empty: "settlement",
   stock_in: null,
+  customer_empty_in: null,
+  customer_full_out: null,
+  customer_empty_out: null,
   cash_debt: "credit",
   cash_return: "settlement",
 };

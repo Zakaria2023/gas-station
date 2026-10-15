@@ -16,7 +16,8 @@ export type CylinderState = (typeof cylinderStates)[number];
  * are columns of the daily sheet; `stock_in` (إضافة) is full cylinders
  * arriving, which the sheet covered by re-typing the morning counts by hand.
  * `cash_debt` and `cash_return` move money, not cylinders: a customer borrows
- * cash from the shop and pays it back.
+ * cash from the shop and pays it back. The last three only move stock: a
+ * customer's empty left at the shop, and a cylinder handed back to a customer.
  * What each one does to the stock and to a customer's debt is in
  * src/lib/movement-rules.ts — the one place those rules live.
  */
@@ -31,6 +32,9 @@ export const movementKinds = [
   "stock_in",
   "cash_debt",
   "cash_return",
+  "customer_empty_in",
+  "customer_full_out",
+  "customer_empty_out",
 ] as const satisfies readonly string[];
 
 export type MovementKind = (typeof movementKinds)[number];
