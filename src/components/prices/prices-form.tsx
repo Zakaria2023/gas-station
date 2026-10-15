@@ -31,7 +31,7 @@ const TYPE_SELECTED: Record<CylinderType, string> = {
 
 // What each price is used for, beyond pricing its own movement.
 const ROLE_HINTS: Partial<Record<PricedKind, string>> = {
-  exchange: "وبه تنحسب قيمة المليان بالمحل وديون المليان",
+  sell_full: "وبه تنحسب قيمة المليان بالمحل وديون المليان",
   sell_empty: "وبه تنحسب قيمة الفاضي بالمحل وديون الفاضي",
 };
 

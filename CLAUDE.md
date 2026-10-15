@@ -55,12 +55,13 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
   money, whose amount is typed), effective from a day. A new price is a new row.
 - A movement stores the `unit_price` it was entered with (prefilled from the
   list, editable). A later price change never rewrites a past sale.
-- The stock on hand is valued at the day's list prices: full at the تبديل
-  price, empty at the بيع فاضي price. Raising a price raises the value of
+- The stock on hand is valued at the day's list prices: full at the بيع مليان
+  price (cylinder and gas), empty at the بيع فاضي price — never full at تبديل,
+  which is the gas alone. Raising a price raises the value of
   what is still in the shop (the owner's example: 400 at 100, 200 sold for
   20,000, price to 110 → the 200 left are worth 22,000).
 - Debts are cylinders **and** money. A debt or return has no list price of its
-  own: it is prefilled at the price of the cylinder it moves, full at تبديل,
+  own: it is prefilled at the price of the cylinder it moves, full at بيع مليان,
   empty at بيع فاضي (`priceFor`), so debts and stock are valued alike. Old
   debt rows in `prices` are ignored. A customer's `Balance.money` is the
   cylinders' worth plus `Balance.cash`, the money borrowed and not paid back.

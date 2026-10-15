@@ -172,7 +172,7 @@ describe("customer balance", () => {
 
 describe("money", () => {
   const prices = (gas: number): PriceList => ({
-    household: { exchange: gas, sell_empty: 30, debt_full: 999 },
+    household: { exchange: gas, sell_full: gas, sell_empty: 30, debt_full: 999 },
     industrial: {},
   });
 
@@ -190,6 +190,16 @@ describe("money", () => {
     expect(left.full).toBe(200);
     expect(stockValue(left, prices(110), "household").full).toBe(22_000);
     expect(sale).toBe(20_000);
+  });
+
+  it("values a full cylinder at بيع مليان, not at the gas-only تبديل price", () => {
+    const list: PriceList = { household: { exchange: 160, sell_full: 1_140, sell_empty: 980 }, industrial: {} };
+    expect(stockValue({ full: 258, empty: 174 }, list, "household")).toEqual({
+      full: 294_120,
+      empty: 170_520,
+      total: 464_640,
+    });
+    expect(priceFor(list, "household", "debt_full")).toBe(1_140);
   });
 
   it("prices a debt and its return like the cylinder they move, ignoring any old debt price", () => {

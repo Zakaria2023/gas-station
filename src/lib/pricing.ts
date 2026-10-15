@@ -8,9 +8,9 @@ import { MOVEMENT_EFFECTS, StockDelta } from "./movement-rules";
  * - Every movement kind but the debts has its own price per type (the price list).
  * - A movement keeps the price it was entered with; changing the list later
  *   never rewrites a past sale.
- * - The stock on hand is worth today's prices: full cylinders at the تبديل
- *   (gas) price, empty ones at the بيع فاضي price. Raising the gas price
- *   raises the value of the cylinders still in the shop.
+ * - The stock on hand is worth today's prices: full cylinders at the بيع مليان
+ *   price (the cylinder and its gas), empty ones at the بيع فاضي price.
+ *   Raising a price raises the value of the cylinders still in the shop.
  * - A debt or its return has no price of its own: it is worth the cylinder it
  *   moves, full or empty, at the price that values the stock.
  */
@@ -38,7 +38,7 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow> = {
 
 /** Which price values the stock still in the shop, and the debts. */
 export const STOCK_PRICE_KIND: Record<CylinderState, MovementKind> = {
-  full: "exchange",
+  full: "sell_full",
   empty: "sell_empty",
 };
 
