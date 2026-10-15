@@ -13,13 +13,12 @@ type Props = {
 };
 
 const AddPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const asked = Array.isArray(params.date) ? params.date[0] : params.date;
   const today = todayIso();
   const date = isIsoDate(asked) && asked <= today ? asked : today;
 
-  const stock = await getDayStock(date);
+  const [, stock] = await Promise.all([requireUser(), getDayStock(date)]);
 
   return (
     <>

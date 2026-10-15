@@ -1,7 +1,7 @@
 import "server-only";
-import { and, asc, desc, eq, gte, lt, lte, sql } from "drizzle-orm";
+import { and, asc, desc, gte, isNotNull, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { CylinderType, cylinderTypes } from "@/db/enum";
+import { CylinderType } from "@/db/enum";
 import { Movements, StockCounts } from "@/db/schema";
 import { buildLedger, LedgerDay, stockBefore } from "@/lib/ledger";
 import { movementSums } from "./aggregates";
@@ -9,46 +9,52 @@ import { movementSums } from "./aggregates";
 export type Ledger = Record<CylinderType, LedgerDay[]>;
 
 /**
- * One type's days from `from` to `to`. The stock just before `from` comes from
- * the last count before it plus the movements since, added up in the
- * database; then only the window itself is walked. All four questions go in
- * parallel — the database is far from the server — so a month ten years in
- * costs the same as this one.
+ * Day by day, for both types, from `from` to `to` inclusive. The stock just
+ * before `from` comes from each type's last count before it plus the
+ * movements since, added up in the database; then only the window itself is
+ * walked. Four questions cover both types, all in parallel — the database is
+ * far from the server — so a month ten years in costs the same as this one.
  */
-const ledgerFor = async (
-  cylinderType: CylinderType,
-  from: string,
-  to: string,
-): Promise<LedgerDay[]> => {
-  const ofType = eq(StockCounts.cylinderType, cylinderType);
-  const lastCountDate = sql`(select max(${StockCounts.countedOn}) from ${StockCounts} where ${ofType} and ${StockCounts.countedOn} < ${from})`;
+export const getLedger = async (from: string, to: string): Promise<Ledger> => {
+  // Per row of movements: the day its type was last counted before the window.
+  const lastCountDate = sql`(select max(${StockCounts.countedOn}) from ${StockCounts} where ${StockCounts.cylinderType} = ${Movements.cylinderType} and ${StockCounts.countedOn} < ${from})`;
 
-  const [[lastCount], before, counts, totals] = await Promise.all([
+  const [lastCounts, before, counts, totals] = await Promise.all([
     db
-      .select({ full: StockCounts.full, empty: StockCounts.empty })
+      .selectDistinctOn([StockCounts.cylinderType], {
+        cylinderType: StockCounts.cylinderType,
+        full: StockCounts.full,
+        empty: StockCounts.empty,
+      })
       .from(StockCounts)
-      .where(and(ofType, lt(StockCounts.countedOn, from)))
-      .orderBy(desc(StockCounts.countedOn))
-      .limit(1),
+      .where(lt(StockCounts.countedOn, from))
+      .orderBy(StockCounts.cylinderType, desc(StockCounts.countedOn)),
     db
-      .select({ kind: Movements.kind, quantity: movementSums.quantity })
+      .select({ cylinderType: Movements.cylinderType, kind: Movements.kind, quantity: movementSums.quantity })
       .from(Movements)
       .where(
         and(
-          eq(Movements.cylinderType, cylinderType),
+          // Money lent or paid back has no type and moves no stock.
+          isNotNull(Movements.cylinderType),
           lt(Movements.businessDate, from),
           // Only what came after the last count; with no count, everything.
           sql`${Movements.businessDate} >= coalesce(${lastCountDate}, '0001-01-01'::date)`,
         ),
       )
-      .groupBy(Movements.kind),
+      .groupBy(Movements.cylinderType, Movements.kind),
     db
-      .select({ countedOn: StockCounts.countedOn, full: StockCounts.full, empty: StockCounts.empty })
+      .select({
+        cylinderType: StockCounts.cylinderType,
+        countedOn: StockCounts.countedOn,
+        full: StockCounts.full,
+        empty: StockCounts.empty,
+      })
       .from(StockCounts)
-      .where(and(ofType, gte(StockCounts.countedOn, from), lte(StockCounts.countedOn, to)))
+      .where(and(gte(StockCounts.countedOn, from), lte(StockCounts.countedOn, to)))
       .orderBy(asc(StockCounts.countedOn)),
     db
       .select({
+        cylinderType: Movements.cylinderType,
         businessDate: Movements.businessDate,
         kind: Movements.kind,
         quantity: movementSums.quantity,
@@ -58,23 +64,21 @@ const ledgerFor = async (
       .from(Movements)
       .where(
         and(
-          eq(Movements.cylinderType, cylinderType),
+          isNotNull(Movements.cylinderType),
           gte(Movements.businessDate, from),
           lte(Movements.businessDate, to),
         ),
       )
-      .groupBy(Movements.businessDate, Movements.kind),
+      .groupBy(Movements.cylinderType, Movements.businessDate, Movements.kind),
   ]);
 
-  return buildLedger(from, to, counts, totals, stockBefore(lastCount ?? null, before));
-};
-
-/** Day by day, for both types, from `from` to `to` inclusive. */
-export const getLedger = async (from: string, to: string): Promise<Ledger> => {
-  const [household, industrial] = await Promise.all(
-    cylinderTypes.map((cylinderType) => ledgerFor(cylinderType, from, to)),
-  );
-  return { household: household ?? [], industrial: industrial ?? [] };
+  const ledgerFor = (cylinderType: CylinderType): LedgerDay[] => {
+    const ofType = <T extends { cylinderType: CylinderType | null }>(rows: T[]) =>
+      rows.filter((row) => row.cylinderType === cylinderType);
+    const lastCount = ofType(lastCounts)[0] ?? null;
+    return buildLedger(from, to, ofType(counts), ofType(totals), stockBefore(lastCount, ofType(before)));
+  };
+  return { household: ledgerFor("household"), industrial: ledgerFor("industrial") };
 };
 
 /** One day of the sheet: both types' opening, totals and closing. */

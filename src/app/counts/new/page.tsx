@@ -13,13 +13,12 @@ type Props = {
 };
 
 const NewCountPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const asked = Array.isArray(params.date) ? params.date[0] : params.date;
   const today = todayIso();
   const date = isIsoDate(asked) && asked <= today ? asked : today;
 
-  const [stock, counts] = await Promise.all([getDayStock(date), getCountsForDay(date)]);
+  const [, stock, counts] = await Promise.all([requireUser(), getDayStock(date), getCountsForDay(date)]);
   const byType = <T,>(pick: (type: CylinderType) => T) =>
     Object.fromEntries(cylinderTypes.map((type) => [type, pick(type)])) as Record<CylinderType, T>;
   const amount = (value: number | undefined) => (value === undefined ? "" : String(value));

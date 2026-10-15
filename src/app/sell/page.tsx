@@ -14,13 +14,12 @@ type Props = {
 };
 
 const SellPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const asked = Array.isArray(params.date) ? params.date[0] : params.date;
   const today = todayIso();
   const date = isIsoDate(asked) && asked <= today ? asked : today;
 
-  const [stock, prices] = await Promise.all([getDayStock(date), getPriceList(date)]);
+  const [, stock, prices] = await Promise.all([requireUser(), getDayStock(date), getPriceList(date)]);
   const blank = () => Object.fromEntries(pricedKinds.map((kind) => [kind, ""])) as Record<PricedKind, string>;
 
   return (

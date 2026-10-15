@@ -25,7 +25,6 @@ type Props = {
  * stock at its end, then its days.
  */
 const HistoryPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const thisMonth = monthOf(today);
@@ -33,7 +32,8 @@ const HistoryPage = async ({ searchParams }: Props) => {
   const month = isIsoMonth(asked) && asked <= thisMonth ? asked : thisMonth;
   const end = month === thisMonth ? today : monthEnd(month);
 
-  const [ledger, cash, firstDate] = await Promise.all([
+  const [, ledger, cash, firstDate] = await Promise.all([
+    requireUser(),
     getLedger(monthStart(month), end),
     summarizeCash(monthStart(month), end),
     getFirstActivityDate(),

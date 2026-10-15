@@ -18,13 +18,12 @@ const oneOf = <T extends string>(value: string | undefined, allowed: readonly T[
   value && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
 
 const NewMovementPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.date);
   const date = isIsoDate(asked) && asked <= today ? asked : today;
 
-  const [customers, stock, prices] = await Promise.all([listCustomers(), getDayStock(date), getPriceList(date)]);
+  const [, customers, stock, prices] = await Promise.all([requireUser(), listCustomers(), getDayStock(date), getPriceList(date)]);
   // Adding stock has its own page.
   const kind = oneOf<MovementKind>(first(params.kind), movementKinds.filter((kind) => kind !== "stock_in")) ?? "exchange";
   const cylinderType = oneOf<CylinderType>(first(params.type), cylinderTypes) ?? "household";

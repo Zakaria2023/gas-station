@@ -25,7 +25,6 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const TodayPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.date);
@@ -35,7 +34,8 @@ const TodayPage = async ({ searchParams }: Props) => {
   const done = first(params.done);
   const onDay = (path: string) => (date === today ? path : `${path}?date=${date}`);
 
-  const [stock, rows, prices, owed, cash] = await Promise.all([
+  const [, stock, rows, prices, owed, cash] = await Promise.all([
+    requireUser(),
     getDayStock(date),
     getDayMovements(date),
     getPriceList(date),

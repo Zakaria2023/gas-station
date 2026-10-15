@@ -22,12 +22,11 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const CustomersPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const search = first(params.q)?.trim() || undefined;
   const owingOnly = first(params.owing) === "1";
 
-  const [customers, owed] = await Promise.all([listCustomers({ search, owingOnly }), getTotalOwed()]);
+  const [, customers, owed] = await Promise.all([requireUser(), listCustomers({ search, owingOnly }), getTotalOwed()]);
   const filtered = Boolean(search || owingOnly);
 
   return (

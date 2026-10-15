@@ -25,7 +25,8 @@ export const readDbSettings = (): DbSettings => {
   // Pasted into one env line, the certificate's line breaks arrive as "\n".
   const ca = process.env.DB_CA_CERT?.replace(/\\n/g, "\n").trim();
   const connectionLimit = Number(process.env.DB_CONNECTION_LIMIT) || 20;
-  const poolMax = Number(process.env.DB_POOL_MAX) || 3;
+  // The day page asks about 8 questions at once; fewer connections would queue them.
+  const poolMax = Number(process.env.DB_POOL_MAX) || 8;
 
   return {
     host: required("DB_HOST"),

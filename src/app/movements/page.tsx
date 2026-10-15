@@ -54,14 +54,14 @@ const byDay = (movements: MovementView[]): { date: string; movements: MovementVi
  * list are added up in the database for the whole filtered period.
  */
 const MovementsLogPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const filters = parseMovementFilters(params);
   const askedPage = Number(Array.isArray(params.page) ? params.page[0] : params.page);
   const page = Number.isInteger(askedPage) && askedPage > 0 ? askedPage : 1;
 
-  const [log, summary, customerName] = await Promise.all([
+  const [, log, summary, customerName] = await Promise.all([
+    requireUser(),
     listMovements(filters, page),
     summarizeMovements(filters),
     filters.customerUuid ? getCustomerName(filters.customerUuid) : Promise.resolve(null),

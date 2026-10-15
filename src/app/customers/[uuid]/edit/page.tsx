@@ -11,9 +11,8 @@ type Props = {
 };
 
 const EditCustomerPage = async ({ params }: Props) => {
-  await requireUser();
   const { uuid } = await params;
-  const customer = await getCustomer(uuid);
+  const [, customer] = await Promise.all([requireUser(), getCustomer(uuid)]);
   if (!customer) {
     notFound();
   }

@@ -20,14 +20,13 @@ type Props = {
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
 const PricesPage = async ({ searchParams }: Props) => {
-  await requireUser();
   const params = await searchParams;
   const today = todayIso();
   const asked = first(params.from);
   const from = isIsoDate(asked) && asked <= today ? asked : today;
   const saved = first(params.saved);
 
-  const [list, changes] = await Promise.all([getPriceList(from), getPriceChanges()]);
+  const [, list, changes] = await Promise.all([requireUser(), getPriceList(from), getPriceChanges()]);
   const values = Object.fromEntries(
     cylinderTypes.map((type) => [
       type,

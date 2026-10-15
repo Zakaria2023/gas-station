@@ -91,7 +91,9 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
   browser with no cookie to `/login` — it never reads the database.
 - **Every page, Server Action and route calls `requireUser()`** (or
   `requireAdmin()` for `/users`) from `src/services/auth.ts`; `getCurrentUser`
-  is cached per request. Add the call to anything new. A user with
+  is cached per request. Add the call to anything new. A page runs it in the
+  same `Promise.all` as its data (one round trip less; it redirects before
+  anything renders); a Server Action checks first, before it writes. A user with
   `must_change_password` (a new user, or after an admin reset) is never
   blocked — the owner asked for that — the shell shows `PasswordReminder`
   above every page until they pick their own.
@@ -140,7 +142,12 @@ by both the app's pool and drizzle-kit.
 
 - The database is far from a dev machine (~2 s to connect, ~280 ms per query).
   Keep pages to few sequential round trips; deploy the app in the same region
-  as the Aiven service.
+  as the Aiven service. The pool (`DB_POOL_MAX`, default 8) must fit a page's
+  parallel queries in one wave — at 3 the day page queued into four (1.1 s →
+  0.27 s at 8). `getLedger` asks four questions for both types together.
+  `src/app/loading.tsx` shows at once on every tap while a page loads.
+- `next dev` compiles each page the first time it is opened, so the first
+  visit is slow; for daily use run `pnpm build && pnpm start`.
 - drizzle-kit wants `ssl` as `true` or an options object, never `false`.
 - Sums of money come back as `::float8` (see `src/services/aggregates.ts`);
   Postgres numeric would arrive as a string.
