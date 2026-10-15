@@ -60,6 +60,8 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - `prices` is a price list with history: a price per cylinder type **per
   movement kind** (`pricedKinds`: the three sales; debts take the stock's
   prices, money is typed, إضافة costs nothing), effective from a day. A new price is a new row.
+- A full is the empty cylinder plus its gas, so بيع مليان should be بيع فاضي +
+  تبديل; the prices page warns (never blocks) when a type's three disagree.
 - A movement stores the `unit_price` it was entered with (prefilled from the
   list, editable). A later price change never rewrites a past sale.
 - The stock on hand is valued at the day's list prices: full at the بيع مليان

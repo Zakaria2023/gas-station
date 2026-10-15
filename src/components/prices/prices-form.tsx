@@ -1,5 +1,6 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
 import { ReactNode } from "react";
 import { usePricesForm } from "@/app/prices/use-prices-form";
 import { GROUP_LABELS, kindChipClass, KindIcon } from "@/components/movements/kind-style";
@@ -14,7 +15,7 @@ import { CylinderType, cylinderTypes } from "@/db/enum";
 import { CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
 import { MOVEMENT_EFFECTS, movementGroups } from "@/lib/movement-rules";
 import { PricedKind, pricedKinds } from "@/lib/pricing";
-import { CURRENCY } from "@/utils/text";
+import { CURRENCY, formatMoney } from "@/utils/text";
 import { PricesFormValues } from "@/validators/prices";
 
 type PricesFormProps = {
@@ -41,7 +42,7 @@ const PRICED_GROUPS = movementGroups
   .filter(({ kinds }) => kinds.length > 0);
 
 export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
-  const { form, state, isPending, onSubmit, shownType, setShownType } = usePricesForm(defaults);
+  const { form, state, isPending, onSubmit, shownType, setShownType, gaps } = usePricesForm(defaults);
   const {
     register,
     formState: { errors },
@@ -126,6 +127,21 @@ export const PricesForm = ({ defaults, today, children }: PricesFormProps) => {
             </ul>
           </section>
         ))}
+
+        {gaps.length > 0 && (
+          <div className="flex items-start gap-3 rounded-card bg-warning-tint p-4 text-warning">
+            <TriangleAlert size={20} className="mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">بيع مليان عادةً = بيع فاضي + تبديل</p>
+              {gaps.map(({ cylinderType, sellFull, expected }) => (
+                <p key={cylinderType} className="mt-1 tabular">
+                  {CYLINDER_TYPE_LABELS[cylinderType]}: بيع مليان {formatMoney(sellFull)}، والمجموع{" "}
+                  {formatMoney(expected)}. تأكد من الأسعار؛ المليان بالمحل بينحسب ببيع مليان.
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {children}
       </div>
