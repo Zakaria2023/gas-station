@@ -1,8 +1,10 @@
 "use client";
 
-import { CalendarDays, Menu, Plus } from "lucide-react";
+import { CalendarDays, ChevronLeft, Menu, PackagePlus, Plus, ShoppingBag, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ACCOUNT_NAV, ADMIN_NAV, isActive, MAIN_NAV, NavItem, TOOLS_NAV } from "./nav-items";
 
 // Right to left: the first tab sits under the right thumb. The tools live
@@ -12,6 +14,19 @@ const LEADING = MAIN_NAV.slice(0, 2);
 const TRAILING: NavItem[] = [
   { href: "/history", label: "السجل", icon: CalendarDays },
   { href: "/more", label: "المزيد", icon: Menu },
+];
+
+// What the + button offers: the day's two jobs first, then any single movement.
+const NEW_ACTIONS: { href: string; label: string; hint: string; icon: LucideIcon; chip: string }[] = [
+  { href: "/sell", label: "بيع", hint: "شو انباع اليوم", icon: ShoppingBag, chip: "bg-sales-tint text-sales" },
+  { href: "/add", label: "إضافة", hint: "مليان وصل للمحل", icon: PackagePlus, chip: "bg-stock-tint text-stock" },
+  {
+    href: "/movements/new",
+    label: "حركة جديدة",
+    hint: "دين، رجع دين، دين مصاري، أو بيع واحد",
+    icon: Plus,
+    chip: "bg-primary-tint text-primary",
+  },
 ];
 
 // Screens that are a task with their own save bar: the tabs step aside.
@@ -29,6 +44,7 @@ const isFocusScreen = (pathname: string) =>
 /** The phone's tab bar; from `lg` up the sidebar takes its place. */
 export const BottomNav = () => {
   const pathname = usePathname();
+  const [choosing, setChoosing] = useState(false);
   if (isFocusScreen(pathname)) {
     return null;
   }
@@ -71,17 +87,40 @@ export const BottomNav = () => {
         <div className="mx-auto grid h-16 max-w-xl grid-cols-5">
           {LEADING.map(renderTab)}
           <div className="flex items-start justify-center">
-            <Link
-              href="/movements/new"
-              aria-label="حركة جديدة"
+            <button
+              type="button"
+              onClick={() => setChoosing(true)}
+              aria-label="جديد"
               className="-mt-5 flex h-15 w-15 items-center justify-center rounded-full bg-primary text-white shadow-float ring-4 ring-page transition active:scale-95"
             >
               <Plus size={30} strokeWidth={2.6} />
-            </Link>
+            </button>
           </div>
           {TRAILING.map(renderTab)}
         </div>
       </nav>
+      <BottomSheet open={choosing} onClose={() => setChoosing(false)} title="جديد">
+        <ul className="flex flex-col gap-2 px-4 pb-4">
+          {NEW_ACTIONS.map(({ href, label, hint, icon: Icon, chip }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                onClick={() => setChoosing(false)}
+                className="flex min-h-16 items-center gap-3 rounded-control bg-hairline-soft px-3 active:bg-hairline"
+              >
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${chip}`}>
+                  <Icon size={22} />
+                </span>
+                <span className="min-w-0 flex-1 leading-tight">
+                  <span className="block text-base font-extrabold text-ink">{label}</span>
+                  <span className="block truncate text-sm text-muted">{hint}</span>
+                </span>
+                <ChevronLeft size={20} className="shrink-0 text-faint" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </BottomSheet>
     </>
   );
 };
