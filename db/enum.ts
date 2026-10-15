@@ -18,6 +18,7 @@ export type CylinderState = (typeof cylinderStates)[number];
  * `cash_debt` and `cash_return` move money, not cylinders: a customer borrows
  * cash from the shop and pays it back. The last three only move stock: a
  * customer's empty left at the shop, and a cylinder handed back to a customer.
+ * `buy_empty` (شراء حديد) is empty cylinders bought, at a price typed each time.
  * What each one does to the stock and to a customer's debt is in
  * src/lib/movement-rules.ts — the one place those rules live.
  */
@@ -35,6 +36,7 @@ export const movementKinds = [
   "customer_empty_in",
   "customer_full_out",
   "customer_empty_out",
+  "buy_empty",
 ] as const satisfies readonly string[];
 
 export type MovementKind = (typeof movementKinds)[number];

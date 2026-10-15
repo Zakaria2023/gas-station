@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, Menu, PackagePlus, Plus, ShoppingBag, type LucideIcon } from "lucide-react";
+import { CalendarDays, ChevronLeft, Cylinder, Menu, PackagePlus, Plus, ShoppingBag, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -20,6 +20,13 @@ const TRAILING: NavItem[] = [
 const NEW_ACTIONS: { href: string; label: string; hint: string; icon: LucideIcon; chip: string }[] = [
   { href: "/sell", label: "بيع", hint: "شو انباع اليوم", icon: ShoppingBag, chip: "bg-sales-tint text-sales" },
   { href: "/add", label: "إضافة", hint: "مليان وصل للمحل", icon: PackagePlus, chip: "bg-stock-tint text-stock" },
+  {
+    href: "/movements/new?kind=buy_empty",
+    label: "شراء حديد",
+    hint: "فاضي اشتريناه، بسعره",
+    icon: Cylinder,
+    chip: "bg-stock-tint text-stock",
+  },
   {
     href: "/movements/new",
     label: "حركة جديدة",

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cylinderTypes, movementKinds } from "@/db/enum";
-import { isCash, needsCustomer } from "@/lib/movement-rules";
+import { isCash, isPurchase, needsCustomer } from "@/lib/movement-rules";
 import { isIsoDate } from "@/utils/dates";
 
 export const MAX_QUANTITY = 5000;
@@ -30,6 +30,10 @@ export const movementFormSchema = z
     // Money is only its amount, typed in the price field.
     if (isCash(values.kind) && !(Number(values.unitPrice) > 0)) {
       ctx.addIssue({ code: "custom", path: ["unitPrice"], message: "أدخل المبلغ" });
+    }
+    // A purchase has no list price: what was paid is typed each time.
+    if (isPurchase(values.kind) && !(Number(values.unitPrice) > 0)) {
+      ctx.addIssue({ code: "custom", path: ["unitPrice"], message: "أدخل سعر الواحدة اللي دفعته" });
     }
   });
 

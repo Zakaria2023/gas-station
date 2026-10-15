@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   ArrowUpFromLine,
   BanknoteArrowDown,
+  Cylinder,
   HandCoins,
   NotebookPen,
   PackagePlus,
@@ -33,6 +34,7 @@ const KIND_ICONS: Record<MovementKind, LucideIcon> = {
   customer_empty_in: ArrowDownToLine,
   customer_full_out: ArrowUpFromLine,
   customer_empty_out: ArrowUpFromLine,
+  buy_empty: Cylinder,
 };
 
 const toneOf = (kind: MovementKind): Tone => {
@@ -41,7 +43,7 @@ const toneOf = (kind: MovementKind): Tone => {
   if (sign) {
     return sign === 1 ? "debts" : "returns";
   }
-  return effect.group === "stock" ? "stock" : "sales";
+  return effect.group === "stock" || effect.group === "purchases" ? "stock" : "sales";
 };
 
 const TONE_CHIP: Record<Tone, string> = {
@@ -68,6 +70,7 @@ export const GROUP_LABELS: Record<MovementGroup, string> = {
   sales: "بيع وتبديل",
   debts: "ديون الزبائن",
   cash: "دين مصاري",
+  purchases: "شراء",
   stock: "المخزون",
 };
 
@@ -88,6 +91,9 @@ export const kindEffectText = (kind: MovementKind): string => {
   }
   if (debt) {
     parts.push(debt.sign === 1 ? "دين على الزبون" : "ينقص دين الزبون");
+  }
+  if (MOVEMENT_EFFECTS[kind].group === "purchases") {
+    parts.push("تطلع مصاري حقها");
   }
   return parts.join(" · ");
 };

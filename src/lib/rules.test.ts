@@ -4,7 +4,7 @@ import { addDays, addMonths, isIsoDate, monthEnd, todayIso } from "@/utils/dates
 import { foldArabic, formatCount, formatMoney, formatSigned } from "@/utils/text";
 import { balanceEntries, bucketOf, foldBalance, owedIn } from "./balances";
 import { buildLedger, emptyTotals, stockBefore, stockTotal } from "./ledger";
-import { applyToStock, isCash, MOVEMENT_EFFECTS, movesMoney, needsCustomer } from "./movement-rules";
+import { applyToStock, isCash, isPurchase, MOVEMENT_EFFECTS, movesMoney, needsCustomer } from "./movement-rules";
 import { amountOf, dayAccount, PriceList, priceFor, pricedKinds, stockValue } from "./pricing";
 
 describe("movement rules, as the sheet's notes state them", () => {
@@ -42,7 +42,17 @@ describe("movement rules, as the sheet's notes state them", () => {
       expect(MOVEMENT_EFFECTS[kind].debt).toBeNull();
     }
     const account = dayAccount({ ...emptyTotals(), customer_empty_in: 500, customer_full_out: 500 });
-    expect(account).toEqual({ income: 0, credit: 0, settlement: 0 });
+    expect(account).toEqual({ income: 0, expense: 0, credit: 0, settlement: 0 });
+  });
+
+  it("buying steel adds empties and pays for them: 100 at 150 is 15,000 out", () => {
+    expect(applyToStock({ full: 0, empty: 0 }, "buy_empty", 100)).toEqual({ full: 0, empty: 100 });
+    expect(isPurchase("buy_empty")).toBe(true);
+    expect(movesMoney("buy_empty")).toBe(true);
+    expect(needsCustomer("buy_empty")).toBe(false);
+    expect(pricedKinds).not.toContain("buy_empty");
+    const account = dayAccount({ ...emptyTotals(), buy_empty: amountOf(100, 150), exchange: 2_000 });
+    expect(account).toEqual({ income: 2_000, expense: 15_000, credit: 0, settlement: 0 });
   });
 
   it("follows the owner's day: 400 added, 200 sold, 200 left", () => {
@@ -234,7 +244,7 @@ describe("money", () => {
       debt_full: 500,
       return_full: 100,
     });
-    expect(account).toEqual({ income: 2_300, credit: 500, settlement: 100 });
+    expect(account).toEqual({ income: 2_300, expense: 0, credit: 500, settlement: 100 });
   });
 
   it("counts money lent as a new debt and money paid back as a debt returned", () => {

@@ -5,7 +5,7 @@ import { CylinderType, MovementKind, movementKinds } from "@/db/enum";
 import { CYLINDER_STATE_LABELS, CYLINDER_TYPE_LABELS } from "@/db/label";
 import { Customers, Movements } from "@/db/schema";
 import { Balance, bucketOf, foldBalance, owedIn } from "@/lib/balances";
-import { isCash, isReturn, MOVEMENT_EFFECTS, needsCustomer } from "@/lib/movement-rules";
+import { isCash, isPurchase, isReturn, MOVEMENT_EFFECTS, needsCustomer } from "@/lib/movement-rules";
 import { formatMoney, generateUuid } from "@/utils";
 import { movementSums } from "./aggregates";
 
@@ -88,6 +88,9 @@ export const createMovement = async (fields: MovementFields): Promise<string> =>
   const cash = isCash(fields.kind);
   if (cash && !(fields.unitPrice && fields.unitPrice > 0)) {
     throw new Error("أدخل المبلغ");
+  }
+  if (isPurchase(fields.kind) && !(fields.unitPrice && fields.unitPrice > 0)) {
+    throw new Error("أدخل سعر الواحدة اللي دفعته");
   }
   if (!cash && !fields.cylinderType) {
     throw new Error("اختر الصنف");

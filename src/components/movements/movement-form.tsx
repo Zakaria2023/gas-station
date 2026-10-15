@@ -16,7 +16,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { Textarea } from "@/components/ui/textarea";
 import { CylinderState, CylinderType, cylinderTypes } from "@/db/enum";
 import { CYLINDER_STATE_LABELS, CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
-import { movesMoney, StockDelta } from "@/lib/movement-rules";
+import { isPurchase, movesMoney, StockDelta } from "@/lib/movement-rules";
 import { PriceList } from "@/lib/pricing";
 import { CURRENCY, formatCount, formatMoney, priceInputValue } from "@/utils/text";
 import { MAX_QUANTITY, MovementFormValues } from "@/validators/movement";
@@ -190,7 +190,7 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
                 <Input
                   {...register("unitPrice")}
                   inputMode="decimal"
-                  placeholder={cash ? "0" : "بدون سعر"}
+                  placeholder={cash || isPurchase(movement.kind) ? "0" : "بدون سعر"}
                   invalid={Boolean(errors.unitPrice) || (cash && overOwed)}
                   className="min-h-14 pe-14 text-2xl font-extrabold tabular"
                 />
@@ -207,6 +207,8 @@ export const MovementForm = ({ defaults, customers, stock, stockDate, today, pri
                       : "هذا الزبون ما عليه مصاري"}
                   </p>
                 )
+              ) : isPurchase(movement.kind) ? (
+                <p className="px-1 text-sm text-muted">اكتب اللي دفعته للجرة الواحدة.</p>
               ) : movement.listPrice === null ? (
                 <p className="px-1 text-sm text-muted">
                   ما في سعر لهذه الحركة بلائحة الأسعار.{" "}

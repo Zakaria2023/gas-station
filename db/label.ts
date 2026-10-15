@@ -29,4 +29,5 @@ export const MOVEMENT_KIND_LABELS: Record<MovementKind, string> = {
   customer_empty_in: "فاضي دخل لزبون",
   customer_full_out: "رجع للزبون مليان",
   customer_empty_out: "رجع للزبون فاضي",
+  buy_empty: "شراء حديد",
 };

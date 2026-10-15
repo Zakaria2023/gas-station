@@ -19,10 +19,10 @@ export type PriceList = Record<CylinderType, Partial<Record<MovementKind, number
 
 export const emptyPriceList = (): PriceList => ({ household: {}, industrial: {} });
 
-/** Money comes in, is lent, or is paid back; the day's account groups by this. */
-export type MoneyFlow = "income" | "credit" | "settlement";
+/** Money comes in, goes out for a purchase, is lent, or is paid back; the day's account groups by this. */
+export type MoneyFlow = "income" | "expense" | "credit" | "settlement";
 
-/** Null for a movement that moves no money: adding stock. */
+/** Null for a movement that moves no money: adding stock, a customer's cylinders. */
 export const MONEY_FLOW: Record<MovementKind, MoneyFlow | null> = {
   exchange: "income",
   sell_full: "income",
@@ -35,6 +35,7 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow | null> = {
   customer_empty_in: null,
   customer_full_out: null,
   customer_empty_out: null,
+  buy_empty: "expense",
   cash_debt: "credit",
   cash_return: "settlement",
 };
@@ -45,7 +46,7 @@ export const STOCK_PRICE_KIND: Record<CylinderState, MovementKind> = {
   empty: "sell_empty",
 };
 
-/** The kinds the price list sets: the sales. Debts take the stock's prices, money is typed, adding is free. */
+/** The kinds the price list sets: the sales. Debts take the stock's prices; money and purchases are typed; adding is free. */
 export type PricedKind = "exchange" | "sell_full" | "sell_empty";
 
 export const pricedKinds = movementKinds.filter(
@@ -79,7 +80,7 @@ export type DayAccount = Record<MoneyFlow, number>;
 
 /** The day's money by flow, from the amount of each kind. */
 export const dayAccount = (amounts: Record<MovementKind, number>): DayAccount => {
-  const account: DayAccount = { income: 0, credit: 0, settlement: 0 };
+  const account: DayAccount = { income: 0, expense: 0, credit: 0, settlement: 0 };
   for (const kind of movementKinds) {
     const flow = MONEY_FLOW[kind];
     if (flow) {
