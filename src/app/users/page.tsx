@@ -65,11 +65,6 @@ const UsersPage = async ({ searchParams }: Props) => {
                     {!user.active && (
                       <span className="rounded-full bg-danger-tint px-2 py-0.5 text-xs font-bold text-danger">موقوف</span>
                     )}
-                    {user.active && user.mustChangePassword && (
-                      <span className="rounded-full bg-warning-tint px-2 py-0.5 text-xs font-bold text-warning">
-                        لسا ما غيّر كلمة السر
-                      </span>
-                    )}
                   </span>
                 </span>
                 <ChevronLeft size={20} className="text-faint" />
