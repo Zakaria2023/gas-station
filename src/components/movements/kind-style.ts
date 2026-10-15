@@ -1,7 +1,6 @@
 import {
   ArrowLeftRight,
   BanknoteArrowDown,
-  Factory,
   HandCoins,
   NotebookPen,
   PackagePlus,
@@ -26,8 +25,7 @@ const KIND_ICONS: Record<MovementKind, LucideIcon> = {
   debt_empty: NotebookPen,
   return_full: Undo2,
   return_empty: Undo2,
-  customer_empty_in: PackagePlus,
-  refill: Factory,
+  stock_in: PackagePlus,
   cash_debt: HandCoins,
   cash_return: BanknoteArrowDown,
 };

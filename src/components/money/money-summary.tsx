@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { ReactNode } from "react";
 import { kindChipClass, KindIcon } from "@/components/movements/kind-style";
 import { StatTile, StatTone } from "@/components/ui/stat-tile";
-import { SummaryCard, TILE_GRID } from "@/components/ui/summary-card";
+import { SummaryCard } from "@/components/ui/summary-card";
 import { TYPE_TEXT } from "@/components/ui/type-badge";
 import { CylinderType, cylinderTypes, MovementKind, movementKinds } from "@/db/enum";
 import { CYLINDER_TYPE_LABELS, MOVEMENT_KIND_LABELS } from "@/db/label";
@@ -23,13 +23,12 @@ type MoneySummaryProps = {
 
 const FLOWS: { flow: MoneyFlow; label: string; tone: StatTone }[] = [
   { flow: "income", label: "المقبوض", tone: "success" },
-  { flow: "expense", label: "المصاريف", tone: "danger" },
   { flow: "credit", label: "ديون جديدة", tone: "debts" },
   { flow: "settlement", label: "ديون رجعت", tone: "returns" },
 ];
 
 /**
- * Any period's money in the app's one shape: four tiles (in, out, lent, paid
+ * Any period's money in the app's one shape: three tiles (sold, lent, paid
  * back), then every movement with its cylinders and money, folded away.
  * Used for a day, a month and any filtered stretch of the log.
  */
@@ -110,9 +109,12 @@ export const MoneySummary = ({ rows, title = "المجموع", periodLabel, acti
         </>
       }
     >
-      <div className={TILE_GRID}>
-        {FLOWS.map(({ flow, label, tone }) => (
-          <StatTile key={flow} label={label} value={formatMoney(account[flow])} tone={tone} empty={account[flow] === 0} />
+      {/* Three tiles: on a phone the money sold takes the whole first row. */}
+      <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-3">
+        {FLOWS.map(({ flow, label, tone }, index) => (
+          <div key={flow} className={index === 0 ? "col-span-2 @2xl:col-span-1" : undefined}>
+            <StatTile label={label} value={formatMoney(account[flow])} tone={tone} empty={account[flow] === 0} />
+          </div>
         ))}
       </div>
     </SummaryCard>

@@ -25,14 +25,13 @@ describe("movement rules, as the sheet's notes state them", () => {
     expect(applyToStock(start, "sell_empty", 4)).toEqual({ full: 41, empty: 430 });
   });
 
-  it("an empty brought in by a customer raises the empty", () => {
-    expect(applyToStock(start, "customer_empty_in", 2)).toEqual({ full: 41, empty: 436 });
+  it("adding stock raises only the full", () => {
+    expect(applyToStock(start, "stock_in", 400)).toEqual({ full: 441, empty: 434 });
   });
 
-  it("a refill turns empties into fulls and keeps the total", () => {
-    const after = applyToStock(start, "refill", 30);
-    expect(after).toEqual({ full: 71, empty: 404 });
-    expect(stockTotal(after)).toBe(stockTotal(start));
+  it("follows the owner's day: 400 added, 200 sold, 200 left", () => {
+    const added = applyToStock({ full: 0, empty: 0 }, "stock_in", 400);
+    expect(applyToStock(added, "sell_full", 200)).toEqual({ full: 200, empty: 0 });
   });
 
   it("only the debt kinds need a customer, of cylinders or of money", () => {
@@ -109,17 +108,17 @@ describe("ledger", () => {
   });
 
   it("starts a window from the stock before it, as if every earlier day had been walked", () => {
-    // Counted 41 / 434 long ago, then 20 exchanges and 1 refill since.
+    // Counted 41 / 434 long ago, then 20 exchanges and 1 full added since.
     const before = stockBefore({ full: 41, empty: 434 }, [
       { kind: "exchange", quantity: 20 },
-      { kind: "refill", quantity: 1 },
+      { kind: "stock_in", quantity: 1 },
     ]);
-    expect(before).toEqual({ full: 22, empty: 453 });
+    expect(before).toEqual({ full: 22, empty: 454 });
     const [day] = buildLedger("2036-10-13", "2036-10-13", [], [], before);
     expect(day?.opening).toEqual(before);
     expect(day?.expectedOpening).toEqual(before);
     // With no count ever, everything starts from zero.
-    expect(stockBefore(null, [{ kind: "customer_empty_in", quantity: 3 }])).toEqual({ full: 0, empty: 3 });
+    expect(stockBefore(null, [{ kind: "stock_in", quantity: 3 }])).toEqual({ full: 3, empty: 0 });
   });
 
   it("walks across a month end", () => {
@@ -207,19 +206,19 @@ describe("money", () => {
     expect(priceFor(prices(100), "household", "return_full")).toBe(100);
     expect(priceFor(prices(100), "household", "debt_empty")).toBe(30);
     expect(priceFor(prices(100), "household", "return_empty")).toBe(30);
-    expect(priceFor(prices(100), "household", "refill")).toBeNull();
+    expect(priceFor(prices(100), "household", "stock_in")).toBeNull();
   });
 
-  it("splits the day's money into cash in, cash out and credit", () => {
+  it("splits the day's money into sold, lent and paid back; adding stock moves no money", () => {
     const account = dayAccount({
       ...emptyTotals(),
       exchange: 2_000,
       sell_empty: 300,
-      refill: 1_000,
+      stock_in: 1_000,
       debt_full: 500,
       return_full: 100,
     });
-    expect(account).toEqual({ income: 2_300, expense: 1_000, credit: 500, settlement: 100, net: 1_300 });
+    expect(account).toEqual({ income: 2_300, credit: 500, settlement: 100 });
   });
 
   it("counts money lent as a new debt and money paid back as a debt returned", () => {
@@ -230,7 +229,7 @@ describe("money", () => {
   });
 
   it("gives money no list price: its amount is typed", () => {
-    expect(pricedKinds).not.toContain("cash_debt");
+    expect(pricedKinds).toEqual(["exchange", "sell_full", "sell_empty"]);
     expect(priceFor(prices(100), "household", "cash_debt")).toBeNull();
   });
 

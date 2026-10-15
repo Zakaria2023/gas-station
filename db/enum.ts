@@ -12,9 +12,9 @@ export const cylinderStates = ["full", "empty"] as const satisfies readonly stri
 export type CylinderState = (typeof cylinderStates)[number];
 
 /**
- * Everything that moves cylinders in or out of the shop. The first eight are
- * the columns of the daily sheet (E to L); `refill` is the trip to the filling
- * plant, which the sheet covered by re-typing the morning counts by hand.
+ * Everything that moves cylinders in or out of the shop. The sales and debts
+ * are columns of the daily sheet; `stock_in` (إضافة) is full cylinders
+ * arriving, which the sheet covered by re-typing the morning counts by hand.
  * `cash_debt` and `cash_return` move money, not cylinders: a customer borrows
  * cash from the shop and pays it back.
  * What each one does to the stock and to a customer's debt is in
@@ -28,8 +28,7 @@ export const movementKinds = [
   "debt_empty",
   "return_full",
   "return_empty",
-  "customer_empty_in",
-  "refill",
+  "stock_in",
   "cash_debt",
   "cash_return",
 ] as const satisfies readonly string[];

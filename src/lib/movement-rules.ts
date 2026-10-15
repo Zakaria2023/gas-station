@@ -10,14 +10,13 @@ import { CylinderState, MovementKind, movementKinds } from "@/db/enum";
  * - تبديل: an empty comes in, a full goes out; the total does not change.
  * - بيع مليان: the full and the total go down.
  * - بيع فاضي: the empty and the total go down.
- * - فاضي دخل زبون: the empty goes up.
  *
  * Not written in the sheet, so these are the reading the app goes with:
  * - دين مليان / دين فاضي: a full / empty leaves on credit; the customer now
  *   owes that cylinder.
  * - رجع دين مليان / رجع دين فاضي: the customer brings that cylinder back;
  *   the stock gets it back and the debt goes down.
- * - تعبئة: empties go to the filling plant and come back full.
+ * - إضافة: full cylinders arrive (the truck); only the full goes up.
  * - دين مصاري / رجع دين مصاري: not in the sheet either; the customer borrows
  *   money from the shop and pays it back. No cylinder moves.
  */
@@ -52,8 +51,7 @@ export const MOVEMENT_EFFECTS: Record<MovementKind, MovementEffect> = {
   return_empty: { stock: { full: 0, empty: 1 }, debt: { state: "empty", sign: -1 }, cash: null, group: "debts" },
   cash_debt: { stock: { full: 0, empty: 0 }, debt: null, cash: 1, group: "cash" },
   cash_return: { stock: { full: 0, empty: 0 }, debt: null, cash: -1, group: "cash" },
-  customer_empty_in: { stock: { full: 0, empty: 1 }, debt: null, cash: null, group: "stock" },
-  refill: { stock: { full: 1, empty: -1 }, debt: null, cash: null, group: "stock" },
+  stock_in: { stock: { full: 1, empty: 0 }, debt: null, cash: null, group: "stock" },
 };
 
 /** Money lent or paid back: no cylinder type, and the amount is typed instead of a count and a price. */

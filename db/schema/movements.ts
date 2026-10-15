@@ -20,7 +20,7 @@ export const movementKindEnum = pgEnum("movement_kind", movementKinds);
 
 /**
  * One thing that happened to the cylinders: an exchange, a sale, a debt, a
- * return, a refill — or money lent to a customer and paid back. The day's
+ * return, full cylinders added — or money lent to a customer and paid back. The day's
  * stock and every customer's debt are both worked out from these rows, so a
  * debt is entered once, not on two sheets.
  */

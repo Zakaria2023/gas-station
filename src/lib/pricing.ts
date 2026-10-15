@@ -5,7 +5,7 @@ import { MOVEMENT_EFFECTS, StockDelta } from "./movement-rules";
  * Money: the price list, what a movement is worth, and what the stock on hand
  * is worth. Pure, so it is tested without a database.
  *
- * - Every movement kind but the debts has its own price per type (the price list).
+ * - Only the sales have a price per type (the price list); adding stock costs nothing here.
  * - A movement keeps the price it was entered with; changing the list later
  *   never rewrites a past sale.
  * - The stock on hand is worth today's prices: full cylinders at the بيع مليان
@@ -19,10 +19,11 @@ export type PriceList = Record<CylinderType, Partial<Record<MovementKind, number
 
 export const emptyPriceList = (): PriceList => ({ household: {}, industrial: {} });
 
-/** Money comes in, goes out, or is lent; the day's account groups by this. */
-export type MoneyFlow = "income" | "expense" | "credit" | "settlement";
+/** Money comes in, is lent, or is paid back; the day's account groups by this. */
+export type MoneyFlow = "income" | "credit" | "settlement";
 
-export const MONEY_FLOW: Record<MovementKind, MoneyFlow> = {
+/** Null for a movement that moves no money: adding stock. */
+export const MONEY_FLOW: Record<MovementKind, MoneyFlow | null> = {
   exchange: "income",
   sell_full: "income",
   sell_empty: "income",
@@ -30,8 +31,7 @@ export const MONEY_FLOW: Record<MovementKind, MoneyFlow> = {
   debt_empty: "credit",
   return_full: "settlement",
   return_empty: "settlement",
-  customer_empty_in: "expense",
-  refill: "expense",
+  stock_in: null,
   cash_debt: "credit",
   cash_return: "settlement",
 };
@@ -42,14 +42,11 @@ export const STOCK_PRICE_KIND: Record<CylinderState, MovementKind> = {
   empty: "sell_empty",
 };
 
-/** The kinds the price list sets; the debts take the stock's prices, and money is typed. */
-export type PricedKind = Exclude<
-  MovementKind,
-  "debt_full" | "debt_empty" | "return_full" | "return_empty" | "cash_debt" | "cash_return"
->;
+/** The kinds the price list sets: the sales. Debts take the stock's prices, money is typed, adding is free. */
+export type PricedKind = "exchange" | "sell_full" | "sell_empty";
 
 export const pricedKinds = movementKinds.filter(
-  (kind): kind is PricedKind => !MOVEMENT_EFFECTS[kind].debt && !MOVEMENT_EFFECTS[kind].cash,
+  (kind): kind is PricedKind => MOVEMENT_EFFECTS[kind].group === "sales",
 );
 
 /** The list's price for one cylinder of a movement, or null when it has none. */
@@ -75,15 +72,17 @@ export const stockValue = (
   return { full, empty, total: (full ?? 0) + (empty ?? 0) };
 };
 
-export type DayAccount = Record<MoneyFlow, number> & { net: number };
+export type DayAccount = Record<MoneyFlow, number>;
 
-/** The day's money by flow, from the amount of each kind; net is cash in minus cash out. */
+/** The day's money by flow, from the amount of each kind. */
 export const dayAccount = (amounts: Record<MovementKind, number>): DayAccount => {
-  const account: DayAccount = { income: 0, expense: 0, credit: 0, settlement: 0, net: 0 };
+  const account: DayAccount = { income: 0, credit: 0, settlement: 0 };
   for (const kind of movementKinds) {
-    account[MONEY_FLOW[kind]] = roundMoney(account[MONEY_FLOW[kind]] + amounts[kind]);
+    const flow = MONEY_FLOW[kind];
+    if (flow) {
+      account[flow] = roundMoney(account[flow] + amounts[kind]);
+    }
   }
-  account.net = roundMoney(account.income - account.expense);
   return account;
 };
 
