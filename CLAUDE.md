@@ -30,6 +30,12 @@ in `src/services`, Server Actions in `src/app/**/actions.ts`, form logic in
 - **Movements** are the only thing entered day to day. The day's stock, the
   history, every customer's debt and the day's money are all computed from
   them; nothing is stored twice.
+- The day's two jobs have their own pages: **إضافة** (`/add`, `stock_in`:
+  full cylinders arrive, only the full goes up, no price) and **بيع**
+  (`/sell`: at the end of the day, how many تبديل, بيع مليان and بيع فاضي of
+  each type, at the list prices, never more than is in the shop). Both save
+  their lines together with `createDayMovements`. `/movements/new` is for one
+  movement at a time — debts, money, a single sale — and does not offer إضافة.
 - **What each movement does to stock and debt lives in one table**:
   `MOVEMENT_EFFECTS` in `src/lib/movement-rules.ts`. The sheet only documented
   تبديل, بيع مليان and بيع فاضي; the debt kinds, their returns and إضافة are

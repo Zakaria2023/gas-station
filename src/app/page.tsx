@@ -1,4 +1,4 @@
-import { ClipboardCheck, ClipboardList, Plus, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, ClipboardList, PackagePlus, Plus, ShoppingBag, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { MovementList } from "@/components/movements/movement-list";
 import { MoneySummary } from "@/components/money/money-summary";
@@ -32,6 +32,8 @@ const TodayPage = async ({ searchParams }: Props) => {
   // A future day has nothing in it yet; it opens today instead.
   const date = isIsoDate(asked) && asked <= today ? asked : today;
   const saved = first(params.saved);
+  const done = first(params.done);
+  const onDay = (path: string) => (date === today ? path : `${path}?date=${date}`);
 
   const [stock, rows, prices, owed, cash] = await Promise.all([
     getDayStock(date),
@@ -74,6 +76,18 @@ const TodayPage = async ({ searchParams }: Props) => {
             movementCount={movements.length}
           />
         )}
+
+        {/* The day's two jobs: what came in, and what was sold. */}
+        <div className="grid grid-cols-2 gap-3 lg:col-span-12 lg:max-w-md">
+          <Link href={onDay("/sell")} className={buttonClasses({ size: "lg" })}>
+            <ShoppingBag size={20} />
+            بيع
+          </Link>
+          <Link href={onDay("/add")} className={buttonClasses({ size: "lg", variant: "secondary" })}>
+            <PackagePlus size={20} />
+            إضافة
+          </Link>
+        </div>
 
         {nothingYet ? (
           <section className="rounded-card bg-surface shadow-card lg:col-span-12">
@@ -128,12 +142,9 @@ const TodayPage = async ({ searchParams }: Props) => {
                 </span>
               )}
             </h2>
-            <Link
-              href={date === today ? "/movements/new" : `/movements/new?date=${date}`}
-              className="flex items-center gap-1 text-sm font-bold text-primary"
-            >
+            <Link href={onDay("/movements/new")} className="flex items-center gap-1 text-sm font-bold text-primary">
               <Plus size={16} />
-              إضافة
+              حركة جديدة
             </Link>
           </div>
           {movements.length > 0 ? (
@@ -145,7 +156,7 @@ const TodayPage = async ({ searchParams }: Props) => {
               description={date === today ? "ما انسجّلت حركات اليوم بعد." : "ما انسجّلت حركات بهذا اليوم."}
               action={
                 <Link
-                  href={date === today ? "/movements/new" : `/movements/new?date=${date}`}
+                  href={onDay("/movements/new")}
                   className={buttonClasses({ variant: "secondary" })}
                 >
                   <Plus size={18} />
@@ -183,7 +194,12 @@ const TodayPage = async ({ searchParams }: Props) => {
         )}
       </div>
 
-      {saved && <Toast key={saved} message="تم حفظ الحركة" />}
+      {saved && (
+        <Toast
+          key={saved}
+          message={done === "sell" ? "تم حفظ البيع" : done === "add" ? "تمت الإضافة" : "تم حفظ الحركة"}
+        />
+      )}
       {first(params.password) === "changed" && <Toast message="تغيّرت كلمة السر" />}
     </>
   );

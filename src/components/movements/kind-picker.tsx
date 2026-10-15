@@ -10,10 +10,10 @@ type KindPickerProps = {
   onChange: (kind: MovementKind) => void;
 };
 
-/** Every kind of movement as a big tile, in the three families the sheet's columns fall into. */
+/** Every kind of movement as a big tile, by family. Adding stock has its own page (/add), so it is not here. */
 export const KindPicker = ({ value, onChange }: KindPickerProps) => (
   <div className="flex flex-col gap-3.5" role="radiogroup" aria-label="نوع الحركة">
-    {movementGroups.map((group) => {
+    {movementGroups.filter((group) => group !== "stock").map((group) => {
       const kinds = kindsInGroup(group);
       return (
         <div key={group}>

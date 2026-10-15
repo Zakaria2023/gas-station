@@ -25,7 +25,8 @@ const NewMovementPage = async ({ searchParams }: Props) => {
   const date = isIsoDate(asked) && asked <= today ? asked : today;
 
   const [customers, stock, prices] = await Promise.all([listCustomers(), getDayStock(date), getPriceList(date)]);
-  const kind = oneOf<MovementKind>(first(params.kind), movementKinds) ?? "exchange";
+  // Adding stock has its own page.
+  const kind = oneOf<MovementKind>(first(params.kind), movementKinds.filter((kind) => kind !== "stock_in")) ?? "exchange";
   const cylinderType = oneOf<CylinderType>(first(params.type), cylinderTypes) ?? "household";
   const askedCustomer = first(params.customer);
   const customerUuid = customers.some((customer) => customer.uuid === askedCustomer) ? askedCustomer! : "";

@@ -73,3 +73,7 @@ export const applyToStock = (stock: StockDelta, kind: MovementKind, quantity: nu
   const { full, empty } = MOVEMENT_EFFECTS[kind].stock;
   return { full: stock.full + full * quantity, empty: stock.empty + empty * quantity };
 };
+
+/** The stock after several movements at once, e.g. a day's sales entered together. */
+export const applyAll = (stock: StockDelta, lines: { kind: MovementKind; quantity: number }[]): StockDelta =>
+  lines.reduce((after, line) => applyToStock(after, line.kind, line.quantity), stock);

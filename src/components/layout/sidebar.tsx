@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Plus, UserRound } from "lucide-react";
+import { LogOut, PackagePlus, Plus, ShoppingBag, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutAction } from "@/app/login/actions";
@@ -42,12 +42,26 @@ export const Sidebar = ({ user }: { user: ShellUser }) => {
         </span>
       </Link>
 
-      <div className="px-4 pb-2">
+      <div className="grid grid-cols-2 gap-2 px-4 pb-2">
         <Link
-          href="/movements/new"
+          href="/sell"
           className="flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary font-bold text-white shadow-sm transition hover:bg-primary-hover"
         >
-          <Plus size={20} strokeWidth={2.6} />
+          <ShoppingBag size={19} strokeWidth={2.4} />
+          بيع
+        </Link>
+        <Link
+          href="/add"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary-tint font-bold text-primary transition hover:bg-primary/15"
+        >
+          <PackagePlus size={19} strokeWidth={2.4} />
+          إضافة
+        </Link>
+        <Link
+          href="/movements/new"
+          className="col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-control border border-hairline text-sm font-bold text-ink transition hover:bg-hover"
+        >
+          <Plus size={18} strokeWidth={2.4} />
           حركة جديدة
         </Link>
       </div>

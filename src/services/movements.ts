@@ -136,6 +136,32 @@ export const createMovement = async (fields: MovementFields): Promise<string> =>
   return uuid;
 };
 
+export type DayLine = {
+  kind: MovementKind;
+  cylinderType: CylinderType;
+  quantity: number;
+  unitPrice: number | null;
+};
+
+/**
+ * Several movements of one day that need no customer — the day's sales, or
+ * the full cylinders that came in — saved together in one insert.
+ */
+export const createDayMovements = async (
+  businessDate: string,
+  lines: DayLine[],
+  note: string | null,
+): Promise<string[]> => {
+  if (lines.some((line) => needsCustomer(line.kind) || isCash(line.kind) || line.quantity < 1)) {
+    throw new Error("حركة غير صالحة");
+  }
+  const rows = lines.map((line) => ({ uuid: generateUuid(), ...line, customerId: null, businessDate, note }));
+  if (rows.length > 0) {
+    await db.insert(Movements).values(rows);
+  }
+  return rows.map((row) => row.uuid);
+};
+
 /**
  * Remove a movement entered by mistake. A debt that has already been partly
  * returned cannot go first, or the customer would owe less than nothing — in

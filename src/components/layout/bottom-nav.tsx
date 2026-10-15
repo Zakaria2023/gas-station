@@ -17,6 +17,8 @@ const TRAILING: NavItem[] = [
 // Screens that are a task with their own save bar: the tabs step aside.
 const isFocusScreen = (pathname: string) =>
   pathname.startsWith("/movements/new") ||
+  pathname.startsWith("/sell") ||
+  pathname.startsWith("/add") ||
   pathname.startsWith("/counts") ||
   pathname.startsWith("/prices") ||
   pathname.startsWith("/account") ||
